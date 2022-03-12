@@ -11,6 +11,10 @@
   </ItemGroup>
 
   <ItemGroup>
+    <PackageReference Include="Microsoft.Azure.SignalR" Version="1.21.2" />
+  </ItemGroup>
+
+  <ItemGroup>
     <ProjectReference Include="..\SalaryCalculator\SalaryCalculator.csproj" />
   </ItemGroup>
 
