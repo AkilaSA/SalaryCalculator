@@ -1,0 +1,111 @@
+﻿@page "/"
+@using System.Globalization
+
+<PageTitle>Salary Calculator</PageTitle>
+
+<h1>Salary Calculator</h1>
+
+<input type="text" placeholder="Basic Salary" @oninput="AmountChanged" />
+
+<br />
+<br />
+@if (details is not null && details.NetSalary > 0)
+{
+	<table>
+		<tbody>
+			<tr>
+				<td>Basic Salary</td>
+				<td>@string.Format(cultureInfo,"{0:C2}", @details.BasicSalary)</td>
+			</tr>
+			@if (details.BasicSalary != details.GrossSalary)
+			{
+				<tr>
+					<td>Gross Salary</td>
+					<td>@string.Format(cultureInfo,"{0:C2}", @details.GrossSalary)</td>
+				</tr>
+			}
+
+			<tr><td><br /></td></tr>
+			<tr style="text-decoration:underline">
+				<td>Deductions</td>
+				<td></td>
+			</tr>
+			@if (details.OtherFixedDeductions?.Count > 0)
+			{
+				@foreach (var item in details.OtherFixedDeductions)
+				{
+					<tr>
+						<td>@item.Name</td>
+						<td>@string.Format(cultureInfo,"{0:C2}", @item.Amount)</td>
+					</tr>
+				}
+			}
+			<tr>
+				<td>EPF</td>
+				<td>@string.Format(cultureInfo,"{0:C2}", @details.EPFETFContributions.TotalEmployeeContribution)</td>
+			</tr>
+			@if (details.PayeeTaxAmount > 0)
+			{
+				<tr>
+					<td>Payee Tax</td>
+					<td>@string.Format(cultureInfo,"{0:C2}", @details.PayeeTaxAmount)</td>
+				</tr>
+			}
+			<tr style="font-weight:bold;">
+				<td>Total Deductions</td>
+				<td>@string.Format(cultureInfo,"{0:C2}", @details.TotalDeductions)</td>
+			</tr>
+			<tr><td><br /></td></tr>
+			<tr style="font-weight:bold;text-decoration:underline">
+				<td>Net Salary</td>
+				<td>@string.Format(cultureInfo,"{0:C2}", @details.NetSalary)</td>
+			</tr>
+			<tr><td><br /></td></tr>
+			<tr style="text-decoration:underline">
+				<td>Employer Contributions</td>
+				<td></td>
+			</tr>
+			<tr>
+				<td>EPF</td>
+				<td>@string.Format(cultureInfo,"{0:C2}", @details.EPFETFContributions.EPFEmployer)</td>
+			</tr>
+			<tr>
+				<td>ETF</td>
+				<td>@string.Format(cultureInfo,"{0:C2}", @details.EPFETFContributions.ETFEmployer)</td>
+			</tr>
+			<tr><td></td></tr>
+			<tr style="font-weight:bold;">
+				<td>Total Employer Contribution</td>
+				<td>@string.Format(cultureInfo,"{0:C2}", @details.EPFETFContributions.TotalEmployerContribution)</td>
+			</tr>
+			<tr><td><br /></td></tr>
+			<tr style="font-weight:bold;">
+				<td>Total EPF ETF Contribution</td>
+				<td>@string.Format(cultureInfo,"{0:C2}", @details.EPFETFContributions.TotalContribution)</td>
+			</tr>
+		</tbody>
+	</table>
+}
+
+
+
+@code {
+
+	private CultureInfo cultureInfo = new CultureInfo("si-LK");
+
+	private decimal basicSalary = 0;
+
+	private SalaryCalculator.SalaryDetails? details = null;
+
+	private void AmountChanged(Microsoft.AspNetCore.Components.ChangeEventArgs args)
+	{
+		if (decimal.TryParse((string)args.Value, out basicSalary))
+		{
+			details = new SalaryCalculator.SalaryDetails(basicSalary, otherFixedDeductions: new List<(string Name, decimal Amount)> { ("Staff Wellfare", 75) });
+		}
+		else
+		{
+			details = null;
+		}
+	}
+}
