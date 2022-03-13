@@ -1,11 +1,90 @@
 ﻿@page "/"
 @using System.Globalization
 
+
 <PageTitle>Salary Calculator</PageTitle>
 
 <h1>Salary Calculator</h1>
 
 <input type="number" min="0" placeholder="Basic Salary" @oninput="AmountChanged" />
+<br />
+<br />
+<button @onclick="OpenDeductionDialog" class="btn btn-primary">Add a deduction</button>
+<button @onclick="OpenAllowanceDialog" class="btn btn-primary">Add a fixed allowance</button>
+<br />
+<br />
+
+@if (_otherFixedDeductions?.Count > 0)
+{
+	<table>
+		<tbody>
+			<tr style="text-decoration:underline">
+				<td>Deductions</td>
+				<td></td>
+			</tr>
+			@foreach (var item in _otherFixedDeductions)
+			{
+				<tr>
+					<td>@item.Value.Name</td>
+					<td>@string.Format(cultureInfo,"{0:C2}", @item.Value.Amount)</td>
+					<td><button @onclick="()=>DeleteItem(item.Key,true)" class="btn btn-primary">Delete</button></td>
+				</tr>
+			}
+		</tbody>
+	</table>
+}
+<br />
+<br />
+
+@if (_fixedAllowances?.Count > 0)
+{
+	<table>
+		<tbody>
+			<tr style="text-decoration:underline">
+				<td>Fixed Allowances</td>
+				<td></td>
+			</tr>
+			@foreach (var item in _fixedAllowances)
+			{
+				<tr>
+					<td>@item.Value.Name</td>
+					<td>@string.Format(cultureInfo,"{0:C2}", @item.Value.Amount)</td>
+					<td><button @onclick="()=>DeleteItem(item.Key,false)" class="btn btn-primary">Delete</button></td>
+				</tr>
+			}
+		</tbody>
+	</table>
+}
+<br />
+<br />
+
+<ModalDialog @ref="_dialog"
+			 OnOpen="OnOpen"
+			 OnClose="OnClose">
+	<Header>
+		@*If you want to hide Header remove the whole Header definition and set ShowCloseButton="false"*@
+		<h4>@Title</h4>
+	</Header>
+	<Content>
+		<div class="container">
+			<div class="row pb-2">
+				@Text
+			</div>
+			<div class="row pb-2">
+				Description: <input class="form-control w-100" @oninput="ModalNameChanged" />
+			</div>
+			<div class="row pb-2">
+				Amount: <input class="form-control w-100" type="number" @oninput="ModalAmountChanged" />
+			</div>
+		</div>
+	</Content>
+	<Footer>
+		@*If you want to hide Header remove the whole Footer definition"*@
+		<button class="btn btn-warning ml-2" @onclick="CancelDialog">Cancel</button>
+		<button class="btn btn-primary ml-2" @onclick="AcceptDialog" disabled="@isModalInValid">Ok</button>
+	</Footer>
+</ModalDialog>
+
 
 <br />
 <br />
@@ -90,6 +169,19 @@
 
 
 @code {
+	private readonly List<(string Name, decimal Amount)> otherFixedDeductions = new List<(string Name, decimal Amount)> { ("Staff Wellfare", 75) };
+	private bool _isAddingDeduction;
+
+	private Dictionary<Guid, (string Name, decimal Amount)> _otherFixedDeductions { get; set; }
+	private Dictionary<Guid, (string Name, decimal Amount)> _fixedAllowances { get; set; }
+
+	protected override async Task OnInitializedAsync()
+	{
+		_otherFixedDeductions = otherFixedDeductions.ToDictionary(x => Guid.NewGuid(), y => y);
+		_fixedAllowances = new Dictionary<Guid, (string Name, decimal Amount)>();
+
+		Calculate();
+	}
 
 	private CultureInfo cultureInfo = new CultureInfo("si-LK");
 
@@ -101,11 +193,101 @@
 	{
 		if (decimal.TryParse((string)args.Value, out basicSalary))
 		{
-			details = new SalaryCalculator.SalaryDetails(basicSalary, otherFixedDeductions: new List<(string Name, decimal Amount)> { ("Staff Wellfare", 75) });
+			Calculate();
 		}
 		else
 		{
 			details = null;
 		}
 	}
+
+	private void Calculate()
+	{
+		details = new SalaryCalculator.SalaryDetails(basicSalary, fixedAllowances: _fixedAllowances?.Values.ToList(), otherFixedDeductions: _otherFixedDeductions?.Values.ToList());
+	}
+
+	private void DeleteItem(Guid id, bool isADeduction)
+	{
+		if (isADeduction && _otherFixedDeductions.ContainsKey(id))
+			_otherFixedDeductions.Remove(id);
+		else if (!isADeduction && _fixedAllowances.ContainsKey(id))
+			_fixedAllowances.Remove(id);
+
+		Calculate();
+	}
+
+	#region Modal
+	public async Task OpenDeductionDialog()
+	{
+		_isAddingDeduction = true;
+		await _dialog.Open();
+	}
+
+	public async Task OpenAllowanceDialog()
+	{
+		_isAddingDeduction = false;
+		await _dialog.Open();
+	}
+
+	public string Title => $"Add a {(_isAddingDeduction ? "deduction" : "allowance")}";
+	public string Text => $"Please enter {(_isAddingDeduction ? "deduction" : "allowance")} reason and amount";
+
+	private bool isModalInValid => string.IsNullOrWhiteSpace(_name) || _value < 1;
+
+	private ModalDialog _dialog;
+	private string _name;
+	private string _amount;
+	private decimal _value;
+
+	private void ModalAmountChanged(Microsoft.AspNetCore.Components.ChangeEventArgs args)
+	{
+		if (string.IsNullOrWhiteSpace((string)args.Value))
+			_value = 0;
+
+		if (!decimal.TryParse((string)args.Value, out _value))
+		{
+			_value = -1;
+		}
+	}
+
+	private void ModalNameChanged(Microsoft.AspNetCore.Components.ChangeEventArgs args)
+	{
+		_name = (string)args.Value;
+	}
+
+	public async Task OpenDialog()
+	{
+		await _dialog.Open();
+	}
+
+	private async Task AcceptDialog()
+	{
+		if (_dialog.IsOpen)
+		{
+
+			if (_isAddingDeduction)
+				_otherFixedDeductions.Add(Guid.NewGuid(), (_name, _value));
+			else
+				_fixedAllowances.Add(Guid.NewGuid(), (_name, _value));
+
+			await _dialog.Close();
+
+			Calculate();
+		}
+	}
+	private async Task CancelDialog()
+	{
+		await _dialog.Close();
+	}
+	public async Task OnOpen()
+	{
+		_name = null;
+		_amount = null;
+	}
+	public async Task OnClose()
+	{
+		_name = null;
+		_amount = null;
+	}
+	#endregion Modal
 }
