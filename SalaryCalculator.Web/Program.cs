@@ -1,6 +1,9 @@
 using Microsoft.AspNetCore.Components;
 using Microsoft.AspNetCore.Components.Web;
 using SalaryCalculator.Web.Data;
+using Majorsoft.Blazor.Components.Common.JsInterop;
+using Majorsoft.Blazor.Components.CssEvents;
+
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -8,6 +11,9 @@ var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddRazorPages();
 builder.Services.AddServerSideBlazor();
 builder.Services.AddSingleton<WeatherForecastService>();
+
+builder.Services.AddCssEvents();
+builder.Services.AddJsInteropExtensions();
 
 var app = builder.Build();
 
