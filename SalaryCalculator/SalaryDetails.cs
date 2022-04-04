@@ -5,17 +5,17 @@ namespace SalaryCalculator
 {
     public class SalaryDetails
     {
-        public SalaryDetails(decimal basicSalary, List<(string Name, decimal Amount)>? fixedAllowances = null, List<(string Name, decimal Amount)>? otherFixedDeductions = null)
+        public SalaryDetails(decimal basicSalary, List<SalaryLineItem>? fixedAllowances = null, List<SalaryLineItem>? otherFixedDeductions = null)
         {
             BasicSalary = basicSalary;
-            FixedAllowances = fixedAllowances ?? new List<(string Name, decimal Amount)>();
-            OtherFixedDeductions = otherFixedDeductions ?? new List<(string Name, decimal Amount)>();
+            FixedAllowances = fixedAllowances ?? new List<SalaryLineItem>();
+            OtherFixedDeductions = otherFixedDeductions ?? new List<SalaryLineItem>();
         }
 
         public decimal BasicSalary { get; }
-        public decimal TotalFixedAllowances => FixedAllowances?.Sum(x => x.Amount) ?? 0;
-        public List<(string Name, decimal Amount)> FixedAllowances { get; }
-        public List<(string Name, decimal Amount)> OtherFixedDeductions { get; }
+        public decimal TotalFixedAllowances => FixedAllowances?.Sum(x => x.GetValue(BasicSalary)) ?? 0;
+        public List<SalaryLineItem> FixedAllowances { get; }
+        public List<SalaryLineItem> OtherFixedDeductions { get; }
         public decimal PayeeTaxAmount
         {
             get
@@ -23,7 +23,7 @@ namespace SalaryCalculator
                 return GetPayeeTaxAmount(BasicSalary + TotalFixedAllowances);
             }
         }
-        public decimal TotalDeductions => PayeeTaxAmount + EPFETFContributions.TotalEmployeeContribution + OtherFixedDeductions?.Sum(x => x.Amount) ?? 0;
+        public decimal TotalDeductions => PayeeTaxAmount + EPFETFContributions.TotalEmployeeContribution + OtherFixedDeductions?.Sum(x => x.GetValue(BasicSalary)) ?? 0;
         public decimal NetSalary => BasicSalary + TotalFixedAllowances - TotalDeductions;
         public decimal GrossSalary => BasicSalary + TotalFixedAllowances;
 
