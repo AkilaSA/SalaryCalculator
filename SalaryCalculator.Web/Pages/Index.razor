@@ -25,8 +25,8 @@
 			@foreach (var item in _otherFixedDeductions)
 			{
 				<tr>
-					<td>@item.Value.Name</td>
-					<td>@string.Format(cultureInfo,"{0:C2}", @item.Value.Amount)</td>
+					<td>@item.Value.Name @(item.Value.IsPercentage?$"({item.Value.Amount}%)":"")</td>
+					<td>@string.Format(cultureInfo,"{0:C2}", @item.Value.GetValue(basicSalary))</td>
 					<td><button @onclick="()=>DeleteItem(item.Key,true)" class="btn btn-primary">Delete</button></td>
 				</tr>
 			}
@@ -47,8 +47,8 @@
 			@foreach (var item in _fixedAllowances)
 			{
 				<tr>
-					<td>@item.Value.Name</td>
-					<td>@string.Format(cultureInfo,"{0:C2}", @item.Value.Amount)</td>
+					<td>@item.Value.Name @(item.Value.IsPercentage?$"({item.Value.Amount}%)":"")</td>
+					<td>@string.Format(cultureInfo,"{0:C2}", @item.Value.GetValue(basicSalary))</td>
 					<td><button @onclick="()=>DeleteItem(item.Key,false)" class="btn btn-primary">Delete</button></td>
 				</tr>
 			}
@@ -72,6 +72,18 @@
 			</div>
 			<div class="row pb-2">
 				Description: <input class="form-control w-100" @oninput="ModalNameChanged" />
+			</div>
+			<div class="row pb-2">
+				<span>
+					<input type="radio" name="amount_type" checked @onchange=@(()=>SetAmountType("value")) />
+					Value @(_isAddingDeduction?"deduction":"allowance")
+				</span>
+				@*			</div>
+					<div class="row pb-2">*@
+				<span>
+					<input type="radio" name="amount_type" @onchange=@(()=>SetAmountType("percentage")) />
+					Percentage @(_isAddingDeduction?"deduction":"allowance")
+				</span>
 			</div>
 			<div class="row pb-2">
 				Amount: <input class="form-control w-100" type="number" @oninput="ModalAmountChanged" />
@@ -114,8 +126,8 @@
 				@foreach (var item in details.OtherFixedDeductions)
 				{
 					<tr>
-						<td>@item.Name</td>
-						<td>@string.Format(cultureInfo,"{0:C2}", @item.Amount)</td>
+						<td>@item.Name @(item.IsPercentage?$"({item.Amount}%)":"")</td>
+						<td>@string.Format(cultureInfo,"{0:C2}", @item.GetValue(details.BasicSalary))</td>
 					</tr>
 				}
 			}
@@ -169,16 +181,20 @@
 
 
 @code {
-	private readonly List<(string Name, decimal Amount)> otherFixedDeductions = new List<(string Name, decimal Amount)> { ("Staff Wellfare", 75) };
+	//Initial Lines
+	private readonly List<SalaryLineItem> otherFixedDeductions = new List<SalaryLineItem> { new SalaryLineItem("Staff Wellfare", 75, false) };
+	private readonly List<SalaryLineItem> fixedAllowances = new List<SalaryLineItem> { new SalaryLineItem("TCoLA", 24, true) };
+
+
 	private bool _isAddingDeduction;
 
-	private Dictionary<Guid, (string Name, decimal Amount)> _otherFixedDeductions { get; set; }
-	private Dictionary<Guid, (string Name, decimal Amount)> _fixedAllowances { get; set; }
+	private Dictionary<Guid, SalaryLineItem> _otherFixedDeductions { get; set; }
+	private Dictionary<Guid, SalaryLineItem> _fixedAllowances { get; set; }
 
 	protected override async Task OnInitializedAsync()
 	{
 		_otherFixedDeductions = otherFixedDeductions.ToDictionary(x => Guid.NewGuid(), y => y);
-		_fixedAllowances = new Dictionary<Guid, (string Name, decimal Amount)>();
+		_fixedAllowances = fixedAllowances.ToDictionary(x => Guid.NewGuid(), y => y);
 
 		Calculate();
 	}
@@ -205,6 +221,8 @@
 	{
 		details = new SalaryCalculator.SalaryDetails(basicSalary, fixedAllowances: _fixedAllowances?.Values.ToList(), otherFixedDeductions: _otherFixedDeductions?.Values.ToList());
 	}
+
+	//private decimal GetAmount((string,string,))
 
 	private void DeleteItem(Guid id, bool isADeduction)
 	{
@@ -238,6 +256,22 @@
 	private string _name;
 	private string _amount;
 	private decimal _value;
+	private bool _isPercentageAmount;
+
+	private void SetAmountType(string type)
+	{
+		switch (type)
+		{
+			case "percentage":
+				{
+					_isPercentageAmount = true;
+					break;
+				}
+			default:
+				_isPercentageAmount = false;
+				break;
+		}
+	}
 
 	private void ModalAmountChanged(Microsoft.AspNetCore.Components.ChangeEventArgs args)
 	{
@@ -264,11 +298,10 @@
 	{
 		if (_dialog.IsOpen)
 		{
-
 			if (_isAddingDeduction)
-				_otherFixedDeductions.Add(Guid.NewGuid(), (_name, _value));
+				_otherFixedDeductions.Add(Guid.NewGuid(), new(_name, _value, _isPercentageAmount));
 			else
-				_fixedAllowances.Add(Guid.NewGuid(), (_name, _value));
+				_fixedAllowances.Add(Guid.NewGuid(), new(_name, _value, _isPercentageAmount));
 
 			await _dialog.Close();
 
