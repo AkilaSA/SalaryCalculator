@@ -135,11 +135,11 @@
 				<td>EPF</td>
 				<td>@string.Format(cultureInfo,"{0:C2}", @details.EPFETFContributions.TotalEmployeeContribution)</td>
 			</tr>
-			@if (details.PayeeTaxAmount > 0)
+			@if (details.TaxAmount > 0)
 			{
 				<tr>
-					<td>Payee Tax</td>
-					<td>@string.Format(cultureInfo,"{0:C2}", @details.PayeeTaxAmount)</td>
+					<td>API Tax</td>
+					<td>@string.Format(cultureInfo,"{0:C2}", @details.TaxAmount)</td>
 				</tr>
 			}
 			<tr style="font-weight:bold;">

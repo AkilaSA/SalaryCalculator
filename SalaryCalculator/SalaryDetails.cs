@@ -16,21 +16,20 @@ namespace SalaryCalculator
         public decimal TotalFixedAllowances => FixedAllowances?.Sum(x => x.GetValue(BasicSalary)) ?? 0;
         public List<SalaryLineItem> FixedAllowances { get; }
         public List<SalaryLineItem> OtherFixedDeductions { get; }
-        public decimal PayeeTaxAmount
+        public decimal TaxAmount
         {
             get
             {
-                return GetPayeeTaxAmount(BasicSalary + TotalFixedAllowances);
+                return CalculateTaxAmount(BasicSalary + TotalFixedAllowances);
             }
         }
-        public decimal TotalDeductions => PayeeTaxAmount + EPFETFContributions.TotalEmployeeContribution + OtherFixedDeductions?.Sum(x => x.GetValue(BasicSalary)) ?? 0;
+        public decimal TotalDeductions => TaxAmount + EPFETFContributions.TotalEmployeeContribution + OtherFixedDeductions?.Sum(x => x.GetValue(BasicSalary)) ?? 0;
         public decimal NetSalary => BasicSalary + TotalFixedAllowances - TotalDeductions;
         public decimal GrossSalary => BasicSalary + TotalFixedAllowances;
 
         public EPFETFContributions EPFETFContributions => new(BasicSalary);
 
-
-        private static decimal GetPayeeTaxAmount(decimal monthlyProfit)
+        protected virtual decimal CalculateTaxAmount(decimal monthlyProfit)
         {
             var tax = 0m;
             if (monthlyProfit <= 250000)
@@ -50,6 +49,7 @@ namespace SalaryCalculator
             }
             return tax;
         }
+
         public override string ToString()
         {
             StringBuilder @string = new();
@@ -71,8 +71,8 @@ namespace SalaryCalculator
                 OtherFixedDeductions.ForEach(x => @string.AppendLine($"\t{x.Name}: {x.Amount}"));
             }
             @string.AppendLine($"\tEPF: {EPFETFContributions.TotalEmployeeContribution}");
-            if (PayeeTaxAmount > 0)
-                @string.AppendLine($"\tPayee Tax: {PayeeTaxAmount}");
+            if (TaxAmount > 0)
+                @string.AppendLine($"\tTax: {TaxAmount}");
             @string.AppendLine($"Total Deductions: {TotalDeductions}");
 
             @string.AppendLine($"{Environment.NewLine}Employer Contributions");
