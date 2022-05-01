@@ -1,6 +1,7 @@
 ﻿@page "/"
 @using System.Globalization
-
+@using SalaryCalculator
+@inject IExchangeRateProvider ExchangeRateProvider
 
 <PageTitle>Salary Calculator</PageTitle>
 
@@ -13,6 +14,27 @@
 <button @onclick="OpenAllowanceDialog" class="btn btn-primary">Add a fixed allowance</button>
 <br />
 <br />
+
+<span><input type="checkbox" @onchange="ShowPeggedChanged" /> Calculate USD pegged basic Salary</span>
+<br />
+
+@if (_showPegged)
+{
+	<span>Base exchange rate for pegging: <input type="number" min="0" placeholder="Base exchange rate" @oninput="BaseRateChanged" @attributes=baseRateAtts /></span>
+	<br />
+	<span><input type="checkbox" @onchange="UseAlternateBasicChanged" /> Use alternate basic salary</span>
+	<br />
+	if (_useAlternateBasic)
+	{
+		<span>Alternate Basic Salary: <input type="number" min="0" placeholder="Base exchange rate" @oninput="ALT_BasicSalaryChanged" @attributes=alt_BasicSalaryAtts /></span>
+		<br />
+	}
+	<i>Curent Exchange Rate: <b>@USDRate.Selling.ToString("c",cultureInfo)</b> as of @USDRate.AsOf.ToLocalTime().DateTime.ToString(cultureInfo) - Live Source <a href="https://www.sampath.lk/en/exchange-rates">Sampath Bank</a></i>
+
+	<br />
+}
+<br />
+
 
 @if (_otherFixedDeductions?.Count > 0)
 {
@@ -34,7 +56,6 @@
 	</table>
 }
 <br />
-<br />
 
 @if (_fixedAllowances?.Count > 0)
 {
@@ -55,8 +76,6 @@
 		</tbody>
 	</table>
 }
-<br />
-<br />
 
 <ModalDialog @ref="_dialog"
 			 OnOpen="OnOpen"
@@ -97,16 +116,35 @@
 	</Footer>
 </ModalDialog>
 
-
 <br />
-<br />
+<hr />
 @if (details is not null && details.NetSalary > 0)
 {
 	<table>
+		@if (_showPegged)
+		{
+			<thead>
+				<tr>
+					<th></th>
+					<th></th>
+					<th>USD Pegged values</th>
+				</tr>
+			</thead>
+		}
 		<tbody>
 			<tr>
 				<td>Basic Salary</td>
 				<td>@string.Format(cultureInfo,"{0:C2}", @details.BasicSalary)</td>
+				@if (_showPegged && basicForPegging > 0 && baseRate > 0)
+				{
+					<td>
+						<span>@string.Format(cultureInfo,"{0:C2}", basicForPegging/baseRate*USDRate.Selling)</span>
+						@if (_useAlternateBasic)
+						{
+							<span>&nbsp; <i>(For Basic Salary of @string.Format(cultureInfo,"{0:C2}", alt_BasicSalary))</i></span>
+						}
+					</td>
+				}
 			</tr>
 			@if (details.BasicSalary != details.GrossSalary)
 			{
@@ -185,6 +223,11 @@
 	private readonly List<SalaryLineItem> otherFixedDeductions = new List<SalaryLineItem> { new SalaryLineItem("Staff Wellfare", 75, false) };
 	private readonly List<SalaryLineItem> fixedAllowances = new List<SalaryLineItem> { new SalaryLineItem("TCoLA", 24, true) };
 
+	private IExchangeRate USDRate;
+	private bool _showPegged = false;
+	private bool _useAlternateBasic = false;
+	private decimal baseRate = 200;
+	private decimal alt_BasicSalary = 0;
 
 	private bool _isAddingDeduction;
 
@@ -195,6 +238,7 @@
 	{
 		_otherFixedDeductions = otherFixedDeductions.ToDictionary(x => Guid.NewGuid(), y => y);
 		_fixedAllowances = fixedAllowances.ToDictionary(x => Guid.NewGuid(), y => y);
+		USDRate = await ExchangeRateProvider.GetExchangeRate(CurrencyCode.USD);
 
 		Calculate();
 	}
@@ -202,6 +246,7 @@
 	private CultureInfo cultureInfo = new CultureInfo("si-LK");
 
 	private decimal basicSalary = 0;
+	private decimal basicForPegging => _useAlternateBasic ? alt_BasicSalary : basicSalary;
 
 	private SalaryCalculator.SalaryDetails? details = null;
 
@@ -215,6 +260,56 @@
 		{
 			details = null;
 		}
+	}
+
+	private void ALT_BasicSalaryChanged(Microsoft.AspNetCore.Components.ChangeEventArgs args)
+	{
+		if (decimal.TryParse((string)args.Value, out decimal v))
+		{
+			alt_BasicSalary = v;
+		}
+		else
+		{
+			alt_BasicSalary = 0;
+		}
+	}
+
+	private void BaseRateChanged(Microsoft.AspNetCore.Components.ChangeEventArgs args)
+	{
+		if (decimal.TryParse((string)args.Value, out decimal v))
+		{
+			baseRate = v;
+		}
+		else
+		{
+			baseRate = 0;
+		}
+	}
+
+	Dictionary<string, object> baseRateAtts;
+
+	private void ShowPeggedChanged(Microsoft.AspNetCore.Components.ChangeEventArgs args)
+	{
+		_showPegged = (bool?)args.Value ?? false;
+		if (_showPegged)
+		{
+			baseRateAtts = new Dictionary<string, object> { { "value", baseRate } };
+			_useAlternateBasic = false;
+		}
+		Calculate();
+	}
+
+	Dictionary<string, object> alt_BasicSalaryAtts;
+
+	private void UseAlternateBasicChanged(Microsoft.AspNetCore.Components.ChangeEventArgs args)
+	{
+		_useAlternateBasic = (bool?)args.Value ?? false;
+
+		if (_useAlternateBasic)
+		{
+			alt_BasicSalaryAtts = new Dictionary<string, object> { { "value", alt_BasicSalary } };
+		}
+		//Calculate();
 	}
 
 	private void Calculate()
