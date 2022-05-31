@@ -15,6 +15,8 @@
 <br />
 <br />
 
+<span><input type="checkbox" @onchange="UseProposedTaxes" /> Used proposed tax to be effected from @(new DateTime(2022,10,1).ToString("yyyy/MMM/d",cultureInfo))</span>
+<br />
 <span><input type="checkbox" @onchange="ShowPeggedChanged" /> Calculate USD pegged basic Salary</span>
 <br />
 
@@ -249,6 +251,7 @@
 	private decimal basicForPegging => _useAlternateBasic ? alt_BasicSalary : basicSalary;
 
 	private SalaryCalculator.SalaryDetails? details = null;
+	private SalaryCalculator.ITaxCalculator taxCalculator = new SalaryCalculator.APITaxCalculator();
 
 	private void AmountChanged(Microsoft.AspNetCore.Components.ChangeEventArgs args)
 	{
@@ -299,6 +302,20 @@
 		Calculate();
 	}
 
+	private void UseProposedTaxes(Microsoft.AspNetCore.Components.ChangeEventArgs args)
+	{
+		var _useProposedTaxes = (bool?)args.Value ?? false;
+		if (_useProposedTaxes)
+		{
+			taxCalculator = new SalaryCalculator.NewAPITaxCalculator();
+		}
+		else
+		{
+			taxCalculator = new SalaryCalculator.APITaxCalculator();
+		}
+		Calculate();
+	}
+
 	Dictionary<string, object> alt_BasicSalaryAtts;
 
 	private void UseAlternateBasicChanged(Microsoft.AspNetCore.Components.ChangeEventArgs args)
@@ -309,12 +326,11 @@
 		{
 			alt_BasicSalaryAtts = new Dictionary<string, object> { { "value", alt_BasicSalary } };
 		}
-		//Calculate();
 	}
 
 	private void Calculate()
 	{
-		details = new SalaryCalculator.SalaryDetails(basicSalary, fixedAllowances: _fixedAllowances?.Values.ToList(), otherFixedDeductions: _otherFixedDeductions?.Values.ToList());
+		details = new SalaryCalculator.SalaryDetails(taxCalculator, basicSalary, fixedAllowances: _fixedAllowances?.Values.ToList(), otherFixedDeductions: _otherFixedDeductions?.Values.ToList());
 	}
 
 	//private decimal GetAmount((string,string,))

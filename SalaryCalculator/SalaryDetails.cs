@@ -5,11 +5,14 @@ namespace SalaryCalculator
 {
     public class SalaryDetails
     {
-        public SalaryDetails(decimal basicSalary, List<SalaryLineItem>? fixedAllowances = null, List<SalaryLineItem>? otherFixedDeductions = null)
+        protected ITaxCalculator TaxCalculator;
+
+        public SalaryDetails(ITaxCalculator taxCalculator, decimal basicSalary, List<SalaryLineItem>? fixedAllowances = null, List<SalaryLineItem>? otherFixedDeductions = null)
         {
             BasicSalary = basicSalary;
             FixedAllowances = fixedAllowances ?? new List<SalaryLineItem>();
             OtherFixedDeductions = otherFixedDeductions ?? new List<SalaryLineItem>();
+            TaxCalculator = taxCalculator;
         }
 
         public decimal BasicSalary { get; }
@@ -20,7 +23,7 @@ namespace SalaryCalculator
         {
             get
             {
-                return CalculateTaxAmount(BasicSalary + TotalFixedAllowances);
+                return TaxCalculator.CalculateTaxAmount(BasicSalary, FixedAllowances, OtherFixedDeductions);
             }
         }
         public decimal TotalDeductions => TaxAmount + EPFETFContributions.TotalEmployeeContribution + OtherFixedDeductions?.Sum(x => x.GetValue(BasicSalary)) ?? 0;
@@ -29,26 +32,26 @@ namespace SalaryCalculator
 
         public EPFETFContributions EPFETFContributions => new(BasicSalary);
 
-        protected virtual decimal CalculateTaxAmount(decimal monthlyProfit)
-        {
-            var tax = 0m;
-            if (monthlyProfit <= 250000)
-                return tax;
+        //protected virtual decimal CalculateTaxAmount(decimal monthlyProfit)
+        //{
+        //    var tax = 0m;
+        //    if (monthlyProfit <= 250000)
+        //        return tax;
 
-            if (monthlyProfit <= 500000)
-            {
-                tax = monthlyProfit * 0.06m - 15000;
-            }
-            else if (monthlyProfit <= 750000)
-            {
-                tax = monthlyProfit * 0.12m - 45000;
-            }
-            else
-            {
-                tax = monthlyProfit * 0.18m - 90000;
-            }
-            return tax;
-        }
+        //    if (monthlyProfit <= 500000)
+        //    {
+        //        tax = monthlyProfit * 0.06m - 15000;
+        //    }
+        //    else if (monthlyProfit <= 750000)
+        //    {
+        //        tax = monthlyProfit * 0.12m - 45000;
+        //    }
+        //    else
+        //    {
+        //        tax = monthlyProfit * 0.18m - 90000;
+        //    }
+        //    return tax;
+        //}
 
         public override string ToString()
         {
