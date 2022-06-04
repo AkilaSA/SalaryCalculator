@@ -43,6 +43,7 @@ namespace SalaryCalculator
             const decimal taxReliefAmount = 150000;
             const decimal taxTierAmount = 100000;
             const decimal taxRateFactor = 0.04m;
+            const decimal maxTier = 8;
 
             var monthlyProfit = basicSalary + taxableAllowances?.Sum(x => x.GetValue(basicSalary)) ?? 0;
             var tax = 0m;
@@ -51,7 +52,7 @@ namespace SalaryCalculator
             var tier = 1;
             while (currentTaxableAmount > 0)
             {
-                if (currentTaxableAmount >= taxTierAmount)
+                if (currentTaxableAmount >= taxTierAmount && tier < maxTier)
                 {
                     tax += taxTierAmount * taxRateFactor * tier;
                 }
