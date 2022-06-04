@@ -8,7 +8,7 @@ namespace SalaryCalculator
 {
     public interface ITaxCalculator
     {
-        decimal CalculateTaxAmount(decimal basicSalary, List<SalaryLineItem>? fixedAllowances = null, List<SalaryLineItem>? otherFixedDeductions = null);
-        Task<decimal> CalculateTaxAmountAsync(decimal basicSalary, List<SalaryLineItem>? fixedAllowances = null, List<SalaryLineItem>? otherFixedDeductions = null, CancellationToken cancellationToken = default);
+        decimal CalculateTaxAmount(decimal basicSalary, List<SalaryLineItem>? taxableAllowances = null, List<SalaryLineItem>? taxableDeductions = null);
+        Task<decimal> CalculateTaxAmountAsync(decimal basicSalary, List<SalaryLineItem>? taxableAllowances = null, List<SalaryLineItem>? taxableDeductions = null, CancellationToken cancellationToken = default);
     }
 }
