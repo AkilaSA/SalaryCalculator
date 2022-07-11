@@ -7,13 +7,35 @@
 
 <h1>Salary Calculator</h1>
 
-<input type="number" min="0" placeholder="Basic Salary" @oninput="AmountChanged" />
+<label for="basic_salary">Basic Salary : </label>
+<input id="basic_salary" type="number" min="0" placeholder="Basic Salary" @oninput="AmountChanged" />
 <br />
 <br />
 <button @onclick="OpenDeductionDialog" class="btn btn-primary">Add a deduction</button>
-<button @onclick="OpenAllowanceDialog" class="btn btn-primary">Add a fixed allowance</button>
-<br />
-<br />
+<hr />
+<div class="row pb-2">
+	<div class="col">
+		Add an allowance of
+		<span>
+			<input type="radio" name="sample_allowance" checked @onchange=@((e)=>SetSampleAllowance(e,32.5m)) value="32.5" />
+			32.5%
+		</span>
+		<span>
+			<input type="radio" name="sample_allowance" @onchange=@((e)=>SetSampleAllowance(e,41m)) value="41" />
+			41%
+		</span>
+		<span>
+			<input type="radio" name="sample_allowance" @onchange=@((e)=>SetSampleAllowance(e,24m)) value="24" />
+			24%
+		</span>
+		<span>
+			<input type="radio" name="sample_allowance" @onchange=@((e)=>SetSampleAllowance(e)) value="none" />
+			None
+		</span>
+	</div>
+</div>
+<button @onclick="OpenAllowanceDialog" class="btn btn-primary">Add another fixed allowance</button>
+<hr />
 
 <span><input type="checkbox" @onchange="UseProposedTaxes" /> Used proposed tax to be effected from @(new DateTime(2022,10,1).ToString("yyyy/MMM/d",cultureInfo))</span>
 <br />
@@ -32,10 +54,8 @@
 		<br />
 	}
 	<i>Curent Exchange Rate: <b>@USDRate.Selling.ToString("c",cultureInfo)</b> as of @USDRate.AsOf.ToOffset(new TimeSpan(5,30,0)).DateTime.ToString("yyyy/MMM/d tth:m:s",cultureInfo) - Live Source <a href="https://www.sampath.lk/en/exchange-rates">Sampath Bank</a></i>
-
-	<br />
 }
-<br />
+<hr />
 
 
 @if (_otherFixedDeductions?.Count > 0)
@@ -57,7 +77,7 @@
 		</tbody>
 	</table>
 }
-<br />
+
 
 @if (_fixedAllowances?.Count > 0)
 {
@@ -72,7 +92,10 @@
 				<tr>
 					<td>@item.Value.Name @(item.Value.IsPercentage?$"({item.Value.Amount}%)":"")</td>
 					<td>@string.Format(cultureInfo,"{0:C2}", @item.Value.GetValue(basicSalary))</td>
-					<td><button @onclick="()=>DeleteItem(item.Key,false)" class="btn btn-primary">Delete</button></td>
+					@if (item.Key != SampleAllowanceGuid)
+					{
+						<td><button @onclick="()=>DeleteItem(item.Key,false)" class="btn btn-primary">Delete</button></td>
+					}
 				</tr>
 			}
 		</tbody>
@@ -99,8 +122,6 @@
 					<input type="radio" name="amount_type" checked @onchange=@(()=>SetAmountType("value")) />
 					Value @(_isAddingDeduction?"deduction":"allowance")
 				</span>
-				@*			</div>
-					<div class="row pb-2">*@
 				<span>
 					<input type="radio" name="amount_type" @onchange=@(()=>SetAmountType("percentage")) />
 					Percentage @(_isAddingDeduction?"deduction":"allowance")
@@ -118,8 +139,7 @@
 	</Footer>
 </ModalDialog>
 
-<br />
-<hr />
+<hr style="border: 2px solid black;" />
 @if (details is not null && details.NetSalary > 0)
 {
 	<table>
@@ -216,14 +236,19 @@
 			</tr>
 		</tbody>
 	</table>
+	<hr style="border: 2px solid black;" />
 }
 
 
 
 @code {
 	//Initial Lines
-	private readonly List<SalaryLineItem> otherFixedDeductions = new List<SalaryLineItem> { new SalaryLineItem("Staff Wellfare", 75, false) };
-	private readonly List<SalaryLineItem> fixedAllowances = new List<SalaryLineItem> { new SalaryLineItem("TCoLA", 24, true) };
+	private readonly Guid SampleAllowanceGuid = new Guid("edbfa563-c93f-4f90-9f71-24fc545cc066");
+	private const string SampleAllowanceName = "TCoLA";
+	private const decimal SampleAllowancePercentage = 32.5m;
+	private decimal? _sampleAllowancePercentage = SampleAllowancePercentage;
+	private readonly List<SalaryLineItem> otherFixedDeductions = new List<SalaryLineItem> { new SalaryLineItem("Staff Wellfare", 75m, false) };
+	//private List<SalaryLineItem> fixedAllowances = new List<SalaryLineItem> { new SalaryLineItem("TCoLA", 32.5m, true) };
 
 	private IExchangeRate USDRate;
 	private bool _showPegged = false;
@@ -239,7 +264,8 @@
 	protected override async Task OnInitializedAsync()
 	{
 		_otherFixedDeductions = otherFixedDeductions.ToDictionary(x => Guid.NewGuid(), y => y);
-		_fixedAllowances = fixedAllowances.ToDictionary(x => Guid.NewGuid(), y => y);
+		//_fixedAllowances = fixedAllowances.ToDictionary(x => Guid.NewGuid(), y => y);
+		_fixedAllowances = new Dictionary<Guid, SalaryLineItem> { { SampleAllowanceGuid, new SalaryLineItem(SampleAllowanceName, SampleAllowancePercentage, true) } };
 		USDRate = await ExchangeRateProvider.GetExchangeRate(CurrencyCode.USD);
 
 		Calculate();
@@ -263,6 +289,24 @@
 		{
 			details = null;
 		}
+	}
+
+	private void SetSampleAllowance(Microsoft.AspNetCore.Components.ChangeEventArgs args, decimal? value = null)
+	{
+		if (value.HasValue)
+		{
+			_sampleAllowancePercentage = value.Value;
+			_fixedAllowances[SampleAllowanceGuid] = new SalaryLineItem(SampleAllowanceName, _sampleAllowancePercentage.Value, true);
+		}
+		else
+		{
+			_sampleAllowancePercentage = null;
+			if (_fixedAllowances.ContainsKey(SampleAllowanceGuid))
+			{
+				_fixedAllowances.Remove(SampleAllowanceGuid);
+			}
+		}
+		Calculate();
 	}
 
 	private void ALT_BasicSalaryChanged(Microsoft.AspNetCore.Components.ChangeEventArgs args)
@@ -332,8 +376,6 @@
 	{
 		details = new SalaryCalculator.SalaryDetails(taxCalculator, basicSalary, fixedAllowances: _fixedAllowances?.Values.ToList(), otherFixedDeductions: _otherFixedDeductions?.Values.ToList());
 	}
-
-	//private decimal GetAmount((string,string,))
 
 	private void DeleteItem(Guid id, bool isADeduction)
 	{

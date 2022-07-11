@@ -19,6 +19,6 @@ namespace SalaryCalculator
         public decimal Amount { get; }
         public bool IsPercentage { get; }
 
-        public decimal GetValue(decimal baseValue) => IsPercentage ? baseValue * Amount / 100 : Amount;
+        public decimal GetValue(decimal baseValue) => IsPercentage ? baseValue / 100 * Amount : Amount;
     }
 }

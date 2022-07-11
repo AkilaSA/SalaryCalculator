@@ -14,6 +14,13 @@ namespace SalaryCalculator
             OtherFixedDeductions = otherFixedDeductions ?? new List<SalaryLineItem>();
             TaxCalculator = taxCalculator;
         }
+        public SalaryDetails(decimal basicSalary, List<SalaryLineItem>? fixedAllowances = null, List<SalaryLineItem>? otherFixedDeductions = null)
+        {
+            BasicSalary = basicSalary;
+            FixedAllowances = fixedAllowances ?? new List<SalaryLineItem>();
+            OtherFixedDeductions = otherFixedDeductions ?? new List<SalaryLineItem>();
+            TaxCalculator = new DefaultTaxCalulator();
+        }
 
         public decimal BasicSalary { get; }
         public decimal TotalFixedAllowances => FixedAllowances?.Sum(x => x.GetValue(BasicSalary)) ?? 0;
@@ -91,6 +98,19 @@ namespace SalaryCalculator
         }
 
         public string ToJson() => JsonSerializer.Serialize(this, new JsonSerializerOptions { WriteIndented = true });
+
+        private class DefaultTaxCalulator : ITaxCalculator
+        {
+            public decimal CalculateTaxAmount(decimal basicSalary, List<SalaryLineItem>? taxableAllowances = null, List<SalaryLineItem>? taxableDeductions = null)
+            {
+                return 0m;
+            }
+
+            public Task<decimal> CalculateTaxAmountAsync(decimal basicSalary, List<SalaryLineItem>? taxableAllowances = null, List<SalaryLineItem>? taxableDeductions = null, CancellationToken cancellationToken = default)
+            {
+                return Task.FromResult(0m);
+            }
+        }
     }
 
 
