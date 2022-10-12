@@ -43,14 +43,12 @@
 	<div class="row pb-2">
 		<div class="col">
 			<span>
-				<input type="radio" name="UseProposedTaxesMode" @onchange=@((e)=>SetUseProposedTaxesMode("Initial")) value="Initial" />
+				<input type="radio" name="UseProposedTaxesMode" @onchange=@((e)=>SetUseProposedTaxesMode(TaxCalculators.NewAPITaxCalculator_Initial)) value="Initial" />
 				Initial proposed scheme
 			</span>
 			<span>
-				<input type="radio" name="UseProposedTaxesMode" checked @onchange=@((e)=>SetUseProposedTaxesMode("Latest")) value="Latest" />
-				Scheme proposed on  @(
-			new DateTime(2022, 10, 11).ToString("yyyy/MMM/d", cultureInfo)
-			)
+				<input type="radio" name="UseProposedTaxesMode" checked @onchange=@((e)=>SetUseProposedTaxesMode(TaxCalculators.NewAPITaxCalculator_Proposed_On_22_10_11)) value="Latest" />
+				Scheme proposed on @(new DateTime(2022, 10, 11).ToString("yyyy/MMM/d", cultureInfo))
 			</span>
 		</div>
 	</div>
@@ -273,6 +271,11 @@
 	private decimal baseRate = 200;
 	private decimal alt_BasicSalary = 0;
 
+	//Tax Calculator selection
+	bool _useProposedTaxes = true;
+	SalaryCalculator.TaxCalculators _useProposedTaxCalculator = TaxCalculators.NewAPITaxCalculator_Proposed_On_22_10_11;
+	private SalaryCalculator.ITaxCalculator taxCalculator = SalaryCalculator.TaxCalculatorFactory.GetTaxCalculator(TaxCalculators.NewAPITaxCalculator_Proposed_On_22_10_11);
+
 	private bool _isAddingDeduction;
 
 	private Dictionary<Guid, SalaryLineItem> _otherFixedDeductions { get; set; }
@@ -294,7 +297,6 @@
 	private decimal basicForPegging => _useAlternateBasic ? alt_BasicSalary : basicSalary;
 
 	private SalaryCalculator.SalaryDetails? details = null;
-	private SalaryCalculator.ITaxCalculator taxCalculator = new SalaryCalculator.NewAPITaxCalculator_Latest();
 
 	private void AmountChanged(Microsoft.AspNetCore.Components.ChangeEventArgs args)
 	{
@@ -363,18 +365,20 @@
 		Calculate();
 	}
 
-	bool _useProposedTaxes = true;
-	string _useProposedTaxesMode = "Latest";
-
 	private void SetUseProposedTaxes(Microsoft.AspNetCore.Components.ChangeEventArgs args)
 	{
 		_useProposedTaxes = (bool?)args.Value ?? false;
+		if (_useProposedTaxes)
+		{
+			//Resetting proposed tax calculator to match with defult checked Radio Button
+			_useProposedTaxCalculator = TaxCalculators.NewAPITaxCalculator_Proposed_On_22_10_11;
+		}
 		SetTaxCalculator();
 	}
 
-	private void SetUseProposedTaxesMode(string mode = "Latest")
+	private void SetUseProposedTaxesMode(SalaryCalculator.TaxCalculators calculator)
 	{
-		_useProposedTaxesMode = mode;
+		_useProposedTaxCalculator = calculator;
 		SetTaxCalculator();
 	}
 
@@ -382,18 +386,11 @@
 	{
 		if (_useProposedTaxes)
 		{
-			if (_useProposedTaxesMode == "Initial")
-			{
-				taxCalculator = new SalaryCalculator.NewAPITaxCalculator_Initial();
-			}
-			else
-			{
-				taxCalculator = new SalaryCalculator.NewAPITaxCalculator_Latest();
-			}
+			taxCalculator = SalaryCalculator.TaxCalculatorFactory.GetTaxCalculator(_useProposedTaxCalculator);
 		}
 		else
 		{
-			taxCalculator = new SalaryCalculator.APITaxCalculator();
+			taxCalculator = SalaryCalculator.TaxCalculatorFactory.GetTaxCalculator(TaxCalculators.APITaxCalculator_Old);
 		}
 		Calculate();
 	}
