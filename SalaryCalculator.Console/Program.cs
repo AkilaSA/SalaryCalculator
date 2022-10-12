@@ -23,7 +23,7 @@ while (true)
 
             List<SalaryLineItem> _otherFixedDeductions = new List<SalaryLineItem> { new SalaryLineItem("Staff Wellfare", 75, false) };
             List<SalaryLineItem> _fixedAllowances = new List<SalaryLineItem> { new SalaryLineItem("TCoLA", 41, true) };
-            var taxCalculator = new SalaryCalculator.NewAPITaxCalculator_Latest();
+            var taxCalculator = TaxCalculatorFactory.GetTaxCalculator(TaxCalculators.NewAPITaxCalculator_Proposed_On_22_10_11);
 
             var details = new SalaryCalculator.SalaryDetails(taxCalculator, basic, fixedAllowances: _fixedAllowances, otherFixedDeductions: _otherFixedDeductions);
             //var details = new SalaryCalculator.SalaryDetails(basic, otherFixedDeductions: deductions);
