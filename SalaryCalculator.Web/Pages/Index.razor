@@ -37,7 +37,20 @@
 <button @onclick="OpenAllowanceDialog" class="btn btn-primary">Add another fixed allowance</button>
 <hr />
 
-<span><input type="checkbox" @onchange="UseProposedTaxes" /> Used proposed tax to be effected from @(new DateTime(2022,10,1).ToString("yyyy/MMM/d",cultureInfo))</span>
+<span><input type="checkbox" checked @onchange="SetUseProposedTaxes" /> Used proposed tax to be effected from @(new DateTime(2022, 10, 1).ToString("yyyy/MMM/d", cultureInfo))</span>
+<div class="row pb-2">
+	<div class="col">
+
+		<span>
+			<input type="radio" name="UseProposedTaxesMode" @onchange=@((e)=>SetUseProposedTaxesMode("Initial")) value="Initial" />
+			Initial proposed scheme
+		</span>
+		<span>
+			<input type="radio" name="UseProposedTaxesMode" checked @onchange=@((e)=>SetUseProposedTaxesMode("Latest")) value="Latest" />
+			Scheme proposed on  @(new DateTime(2022, 10, 11).ToString("yyyy/MMM/d", cultureInfo))
+		</span>
+	</div>
+</div>
 <br />
 <span><input type="checkbox" @onchange="ShowPeggedChanged" /> Calculate USD pegged basic Salary</span>
 <br />
@@ -69,7 +82,7 @@
 			@foreach (var item in _otherFixedDeductions)
 			{
 				<tr>
-					<td>@item.Value.Name @(item.Value.IsPercentage?$"({item.Value.Amount}%)":"")</td>
+					<td>@item.Value.Name @(item.Value.IsPercentage ? $"({item.Value.Amount}%)" : "")</td>
 					<td>@string.Format(cultureInfo,"{0:C2}", @item.Value.GetValue(basicSalary))</td>
 					<td><button @onclick="()=>DeleteItem(item.Key,true)" class="btn btn-primary">Delete</button></td>
 				</tr>
@@ -90,7 +103,7 @@
 			@foreach (var item in _fixedAllowances)
 			{
 				<tr>
-					<td>@item.Value.Name @(item.Value.IsPercentage?$"({item.Value.Amount}%)":"")</td>
+					<td>@item.Value.Name @(item.Value.IsPercentage ? $"({item.Value.Amount}%)" : "")</td>
 					<td>@string.Format(cultureInfo,"{0:C2}", @item.Value.GetValue(basicSalary))</td>
 					@if (item.Key != SampleAllowanceGuid)
 					{
@@ -120,11 +133,11 @@
 			<div class="row pb-2">
 				<span>
 					<input type="radio" name="amount_type" checked @onchange=@(()=>SetAmountType("value")) />
-					Value @(_isAddingDeduction?"deduction":"allowance")
+					Value @(_isAddingDeduction ? "deduction" : "allowance")
 				</span>
 				<span>
 					<input type="radio" name="amount_type" @onchange=@(()=>SetAmountType("percentage")) />
-					Percentage @(_isAddingDeduction?"deduction":"allowance")
+					Percentage @(_isAddingDeduction ? "deduction" : "allowance")
 				</span>
 			</div>
 			<div class="row pb-2">
@@ -186,7 +199,7 @@
 				@foreach (var item in details.OtherFixedDeductions)
 				{
 					<tr>
-						<td>@item.Name @(item.IsPercentage?$"({item.Amount}%)":"")</td>
+						<td>@item.Name @(item.IsPercentage ? $"({item.Amount}%)" : "")</td>
 						<td>@string.Format(cultureInfo,"{0:C2}", @item.GetValue(details.BasicSalary))</td>
 					</tr>
 				}
@@ -277,7 +290,7 @@
 	private decimal basicForPegging => _useAlternateBasic ? alt_BasicSalary : basicSalary;
 
 	private SalaryCalculator.SalaryDetails? details = null;
-	private SalaryCalculator.ITaxCalculator taxCalculator = new SalaryCalculator.APITaxCalculator();
+	private SalaryCalculator.ITaxCalculator taxCalculator = new SalaryCalculator.NewAPITaxCalculator_Latest();
 
 	private void AmountChanged(Microsoft.AspNetCore.Components.ChangeEventArgs args)
 	{
@@ -346,12 +359,33 @@
 		Calculate();
 	}
 
-	private void UseProposedTaxes(Microsoft.AspNetCore.Components.ChangeEventArgs args)
+	bool _useProposedTaxes = true;
+	string _useProposedTaxesMode = "Latest";
+
+	private void SetUseProposedTaxes(Microsoft.AspNetCore.Components.ChangeEventArgs args)
 	{
-		var _useProposedTaxes = (bool?)args.Value ?? false;
+		_useProposedTaxes = (bool?)args.Value ?? false;
+		SetTaxCalculator();
+	}
+
+	private void SetUseProposedTaxesMode(string mode = "Latest")
+	{
+		_useProposedTaxesMode = mode;
+		SetTaxCalculator();
+	}
+
+	private void SetTaxCalculator()
+	{
 		if (_useProposedTaxes)
 		{
-			taxCalculator = new SalaryCalculator.NewAPITaxCalculator();
+			if (_useProposedTaxesMode == "Initial")
+			{
+				taxCalculator = new SalaryCalculator.NewAPITaxCalculator_Initial();
+			}
+			else
+			{
+				taxCalculator = new SalaryCalculator.NewAPITaxCalculator_Latest();
+			}
 		}
 		else
 		{
@@ -359,6 +393,7 @@
 		}
 		Calculate();
 	}
+
 
 	Dictionary<string, object> alt_BasicSalaryAtts;
 
