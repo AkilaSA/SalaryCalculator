@@ -38,19 +38,23 @@
 <hr />
 
 <span><input type="checkbox" checked @onchange="SetUseProposedTaxes" /> Used proposed tax to be effected from @(new DateTime(2022, 10, 1).ToString("yyyy/MMM/d", cultureInfo))</span>
-<div class="row pb-2">
-	<div class="col">
-
-		<span>
-			<input type="radio" name="UseProposedTaxesMode" @onchange=@((e)=>SetUseProposedTaxesMode("Initial")) value="Initial" />
-			Initial proposed scheme
-		</span>
-		<span>
-			<input type="radio" name="UseProposedTaxesMode" checked @onchange=@((e)=>SetUseProposedTaxesMode("Latest")) value="Latest" />
-			Scheme proposed on  @(new DateTime(2022, 10, 11).ToString("yyyy/MMM/d", cultureInfo))
-		</span>
+@if (_useProposedTaxes)
+{
+	<div class="row pb-2">
+		<div class="col">
+			<span>
+				<input type="radio" name="UseProposedTaxesMode" @onchange=@((e)=>SetUseProposedTaxesMode("Initial")) value="Initial" />
+				Initial proposed scheme
+			</span>
+			<span>
+				<input type="radio" name="UseProposedTaxesMode" checked @onchange=@((e)=>SetUseProposedTaxesMode("Latest")) value="Latest" />
+				Scheme proposed on  @(
+			new DateTime(2022, 10, 11).ToString("yyyy/MMM/d", cultureInfo)
+			)
+			</span>
+		</div>
 	</div>
-</div>
+}
 <br />
 <span><input type="checkbox" @onchange="ShowPeggedChanged" /> Calculate USD pegged basic Salary</span>
 <br />
