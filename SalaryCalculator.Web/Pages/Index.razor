@@ -37,7 +37,7 @@
 <button @onclick="OpenAllowanceDialog" class="btn btn-primary">Add another fixed allowance</button>
 <hr />
 
-<span><input type="checkbox" checked @onchange="SetUseProposedTaxes" /> Used proposed tax to be effected from @(new DateTime(2022, 10, 1).ToString("yyyy/MMM/d", cultureInfo))</span>
+<span><input type="checkbox" checked @onchange="SetUseProposedTaxes" /> Use new tax to be effected from @(new DateTime(2023, 1, 1).ToString("yyyy/MMM/d", cultureInfo))</span>
 @if (_useProposedTaxes)
 {
 	<div class="row pb-2">
@@ -48,7 +48,7 @@
 			</span>
 			<span>
 				<input type="radio" name="UseProposedTaxesMode" checked @onchange=@((e)=>SetUseProposedTaxesMode(TaxCalculators.NewAPITaxCalculator_Proposed_On_22_10_11)) value="Latest" />
-				Scheme proposed on @(new DateTime(2022, 10, 11).ToString("yyyy/MMM/d", cultureInfo))
+				Scheme proposed on @(new DateTime(2022, 10, 11).ToString("yyyy/MMM/d", cultureInfo)) (Now Active)
 			</span>
 		</div>
 	</div>
