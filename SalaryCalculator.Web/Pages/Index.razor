@@ -53,11 +53,14 @@
 		</div>
 	</div>
 }
-<br />
-<span><input type="checkbox" @onchange="ShowPeggedChanged" /> Calculate USD pegged basic Salary</span>
-<br />
+@if (USDRate != null)
+{
+	<br />
+	<span><input type="checkbox" @onchange="ShowPeggedChanged" disabled="@(USDRate==null)" /> Calculate USD pegged basic Salary</span>
+	<br />
+}
 
-@if (_showPegged)
+@if (_showPegged && USDRate != null)
 {
 	<span>Base exchange rate for pegging: <input type="number" min="0" placeholder="Base exchange rate" @oninput="BaseRateChanged" @attributes=baseRateAtts /></span>
 	<br />
@@ -158,7 +161,7 @@
 @if (details is not null && details.NetSalary > 0)
 {
 	<table>
-		@if (_showPegged)
+		@if (_showPegged && USDRate != null)
 		{
 			<thead>
 				<tr>
@@ -172,7 +175,7 @@
 			<tr>
 				<td>Basic Salary</td>
 				<td>@string.Format(cultureInfo,"{0:C2}", @details.BasicSalary)</td>
-				@if (_showPegged && basicForPegging > 0 && baseRate > 0)
+				@if (_showPegged && basicForPegging > 0 && baseRate > 0 && USDRate != null)
 				{
 					<td>
 						<span>@string.Format(cultureInfo,"{0:C2}", basicForPegging/baseRate*USDRate.Selling)</span>
