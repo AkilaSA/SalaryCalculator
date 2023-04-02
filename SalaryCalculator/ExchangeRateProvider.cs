@@ -1,11 +1,4 @@
-﻿using AngleSharp.Html.Parser;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-
-namespace SalaryCalculator
+﻿namespace SalaryCalculator
 {
 	public interface IExchangeRateProvider
 	{
@@ -51,7 +44,6 @@ namespace SalaryCalculator
 	{
 		public CurrencyCode BaseCurrencyCode { get; }
 		public CurrencyCode ValueCurrencyCode { get; }
-		//public decimal ODBuying { get; }
 		public decimal Buying { get; }
 		public decimal Selling { get; }
 		public DateTimeOffset AsOf { get; }

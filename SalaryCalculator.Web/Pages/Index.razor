@@ -71,7 +71,7 @@
 		<span>Alternate Basic Salary: <input type="number" min="0" placeholder="Base exchange rate" @oninput="ALT_BasicSalaryChanged" @attributes=alt_BasicSalaryAtts /></span>
 		<br />
 	}
-	<i>Curent Exchange Rate: <b>@USDRate.Selling.ToString("c",cultureInfo)</b> as of @USDRate.AsOf.ToOffset(new TimeSpan(5,30,0)).DateTime.ToString("yyyy/MMM/d tth:m:s",cultureInfo) - Live Source <a href="https://www.sampath.lk/en/exchange-rates" target="_blank">Sampath Bank</a></i>
+	<i>Curent Exchange Rate: <b>@USDRate.Selling.ToString("c",cultureInfo)</b> as of @USDRate.AsOf.ToOffset(new TimeSpan(5,30,0)).DateTime.ToString("yyyy/MMM/d tth:m:s",cultureInfo) - Live Source <a href="https://www.sampath.lk/rates-and-charges?activeTab=exchange-rates" target="_blank">Sampath Bank</a></i>
 }
 <hr />
 
