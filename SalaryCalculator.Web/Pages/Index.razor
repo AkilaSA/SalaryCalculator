@@ -14,25 +14,28 @@
 <button @onclick="OpenDeductionDialog" class="btn btn-primary">Add a deduction</button>
 <hr />
 <div class="row pb-2">
-	<div class="col">
-		Add an allowance of
-		<span>
-			<input type="radio" name="sample_allowance" checked @onchange=@((e)=>SetSampleAllowance(e,32.5m)) value="32.5" />
-			32.5%
-		</span>
-		<span>
-			<input type="radio" name="sample_allowance" @onchange=@((e)=>SetSampleAllowance(e,41m)) value="41" />
-			41%
-		</span>
-		<span>
-			<input type="radio" name="sample_allowance" @onchange=@((e)=>SetSampleAllowance(e,24m)) value="24" />
-			24%
-		</span>
-		<span>
-			<input type="radio" name="sample_allowance" @onchange=@((e)=>SetSampleAllowance(e)) value="none" />
-			None
-		</span>
-	</div>
+    <span><input type="checkbox" checked @onchange="SetUseSampleTiredAllowance" /> Use sample tierd allowance</span>
+</div>
+<div class="row pb-2">
+    <div class="col">
+        Add an allowance of
+        <span>
+            <input type="radio" name="sample_allowance" @onchange=@((e)=>SetSampleAllowance(e,32.5m)) value="32.5" />
+            32.5%
+        </span>
+        <span>
+            <input type="radio" name="sample_allowance" @onchange=@((e)=>SetSampleAllowance(e,41m)) value="41" />
+            41%
+        </span>
+        <span>
+            <input type="radio" name="sample_allowance" @onchange=@((e)=>SetSampleAllowance(e,24m)) value="24" />
+            24%
+        </span>
+        <span>
+            <input type="radio" name="sample_allowance" checked @onchange=@((e)=>SetSampleAllowance(e)) value="none" />
+            None
+        </span>
+    </div>
 </div>
 <button @onclick="OpenAllowanceDialog" class="btn btn-primary">Add another fixed allowance</button>
 <hr />
@@ -40,479 +43,536 @@
 <span><input type="checkbox" checked @onchange="SetUseProposedTaxes" /> Use new tax to be effected from @(new DateTime(2023, 1, 1).ToString("yyyy/MMM/d", cultureInfo))</span>
 @if (_useProposedTaxes)
 {
-	<div class="row pb-2">
-		<div class="col">
-			<span>
-				<input type="radio" name="UseProposedTaxesMode" @onchange=@((e)=>SetUseProposedTaxesMode(TaxCalculators.NewAPITaxCalculator_Initial)) value="Initial" />
-				Initial proposed scheme
-			</span>
-			<span>
-				<input type="radio" name="UseProposedTaxesMode" checked @onchange=@((e)=>SetUseProposedTaxesMode(TaxCalculators.NewAPITaxCalculator_Proposed_On_22_10_11)) value="Latest" />
-				Scheme proposed on @(new DateTime(2022, 10, 11).ToString("yyyy/MMM/d", cultureInfo)) (Now Active)
-			</span>
-		</div>
-	</div>
+    <div class="row pb-2">
+        <div class="col">
+            <span>
+                <input type="radio" name="UseProposedTaxesMode" @onchange=@((e)=>SetUseProposedTaxesMode(TaxCalculators.NewAPITaxCalculator_Initial)) value="Initial" />
+                Initial proposed scheme
+            </span>
+            <span>
+                <input type="radio" name="UseProposedTaxesMode" checked @onchange=@((e)=>SetUseProposedTaxesMode(TaxCalculators.NewAPITaxCalculator_Proposed_On_22_10_11)) value="Latest" />
+                Scheme proposed on @(new DateTime(2022, 10, 11).ToString("yyyy/MMM/d", cultureInfo)) (Now Active)
+            </span>
+        </div>
+    </div>
 }
 @if (USDRate != null)
 {
-	<br />
-	<span><input type="checkbox" @onchange="ShowPeggedChanged" disabled="@(USDRate==null)" /> Calculate USD pegged basic Salary</span>
-	<br />
+    <br />
+    <span><input type="checkbox" @onchange="ShowPeggedChanged" disabled="@(USDRate==null)" /> Calculate USD pegged basic Salary</span>
+    <br />
 }
 
 @if (_showPegged && USDRate != null)
 {
-	<span>Base exchange rate for pegging: <input type="number" min="0" placeholder="Base exchange rate" @oninput="BaseRateChanged" @attributes=baseRateAtts /></span>
-	<br />
-	<span><input type="checkbox" @onchange="UseAlternateBasicChanged" /> Use alternate basic salary</span>
-	<br />
-	if (_useAlternateBasic)
-	{
-		<span>Alternate Basic Salary: <input type="number" min="0" placeholder="Base exchange rate" @oninput="ALT_BasicSalaryChanged" @attributes=alt_BasicSalaryAtts /></span>
-		<br />
-	}
-	<i>Curent Exchange Rate: <b>@USDRate.Selling.ToString("c",cultureInfo)</b> as of @USDRate.AsOf.ToOffset(new TimeSpan(5,30,0)).DateTime.ToString("yyyy/MMM/d tth:m:s",cultureInfo) - Live Source <a href="https://www.sampath.lk/rates-and-charges?activeTab=exchange-rates" target="_blank">Sampath Bank</a></i>
+    <span>Base exchange rate for pegging: <input type="number" min="0" placeholder="Base exchange rate" @oninput="BaseRateChanged" @attributes=baseRateAtts /></span>
+    <br />
+    <span><input type="checkbox" @onchange="UseAlternateBasicChanged" /> Use alternate basic salary</span>
+    <br />
+    if (_useAlternateBasic)
+    {
+        <span>Alternate Basic Salary: <input type="number" min="0" placeholder="Base exchange rate" @oninput="ALT_BasicSalaryChanged" @attributes=alt_BasicSalaryAtts /></span>
+        <br />
+    }
+    <i>Curent Exchange Rate: <b>@USDRate.Selling.ToString("c",cultureInfo)</b> as of @USDRate.AsOf.ToOffset(new TimeSpan(5,30,0)).DateTime.ToString("yyyy/MMM/d tth:m:s",cultureInfo) - Live Source <a href="https://www.sampath.lk/rates-and-charges?activeTab=exchange-rates" target="_blank">Sampath Bank</a></i>
 }
 <hr />
 
 
-@if (_otherFixedDeductions?.Count > 0)
+@if (_deductions?.Count > 0)
 {
-	<table>
-		<tbody>
-			<tr style="text-decoration:underline">
-				<td>Deductions</td>
-				<td></td>
-			</tr>
-			@foreach (var item in _otherFixedDeductions)
-			{
-				<tr>
-					<td>@item.Value.Name @(item.Value.IsPercentage ? $"({item.Value.Amount}%)" : "")</td>
-					<td>@string.Format(cultureInfo,"{0:C2}", @item.Value.GetValue(basicSalary))</td>
-					<td><button @onclick="()=>DeleteItem(item.Key,true)" class="btn btn-primary">Delete</button></td>
-				</tr>
-			}
-		</tbody>
-	</table>
+    <table>
+        <tbody>
+            <tr style="text-decoration:underline">
+                <td>Deductions</td>
+                <td>Taxable</td>
+                <td></td>
+            </tr>
+            @foreach (var item in _deductions)
+            {
+                <tr>
+                    <td>@item.Value.Name @(item.Value.IsPercentage ? $"({item.Value.Amount}%)" : "")</td>
+                    <td>@string.Format(cultureInfo,"{0:C2}", @item.Value.Value)</td>
+                    <td>@(item.Value.IsTaxable ? "✓" : "✗")</td>
+                    <td><button @onclick="()=>DeleteItem(item.Key,true)" class="btn btn-primary">Delete</button></td>
+                </tr>
+            }
+        </tbody>
+    </table>
 }
 
 
-@if (_fixedAllowances?.Count > 0)
+@if (_allowances.Count > 0)
 {
-	<table>
-		<tbody>
-			<tr style="text-decoration:underline">
-				<td>Fixed Allowances</td>
-				<td></td>
-			</tr>
-			@foreach (var item in _fixedAllowances)
-			{
-				<tr>
-					<td>@item.Value.Name @(item.Value.IsPercentage ? $"({item.Value.Amount}%)" : "")</td>
-					<td>@string.Format(cultureInfo,"{0:C2}", @item.Value.GetValue(basicSalary))</td>
-					@if (item.Key != SampleAllowanceGuid)
-					{
-						<td><button @onclick="()=>DeleteItem(item.Key,false)" class="btn btn-primary">Delete</button></td>
-					}
-				</tr>
-			}
-		</tbody>
-	</table>
+    <table>
+        <tbody>
+            <tr style="text-decoration:underline">
+                <td>Allowances</td>
+                <td></td>
+                <td></td>
+                <td></td>
+            </tr>
+            @foreach (var item in _allowances)
+            {
+                <tr>
+                    <td>@item.Value.Name @(item.Value.IsPercentage ? $"({item.Value.Amount}%)" : "")</td>
+                    <td>@string.Format(cultureInfo,"{0:C2}", @item.Value.Value)</td>
+                    <td>@(item.Value.IsTaxable ? "Taxable - ✓" : "Taxable - ✗")</td>
+                    @if (item.Key != SampleAllowanceGuid)
+                    {
+                        <td><button @onclick="()=>DeleteItem(item.Key,false)" class="btn btn-primary">Delete</button></td>
+                    }
+                </tr>
+            }
+        </tbody>
+    </table>
+}
+
+@if (_useSampleTiredAllowance && _tierAllowanceResponse != null)
+{
+    <table>
+        <tbody>
+            <tr style="text-decoration:underline">
+                <td>Tierd Allowance</td>
+                <td></td>
+                <td></td>
+            </tr>
+            <tr>
+                <td>@_tierAllowanceResponse.SchemeName</td>
+                <td>@string.Format(cultureInfo,"{0:C2}", _tierAllowanceResponse.Total)</td>
+                <td>@(_tierAllowanceResponse.Description)</td>
+            </tr>
+        </tbody>
+    </table>
 }
 
 <ModalDialog @ref="_dialog"
-			 OnOpen="OnOpen"
-			 OnClose="OnClose">
-	<Header>
-		@*If you want to hide Header remove the whole Header definition and set ShowCloseButton="false"*@
-		<h4>@Title</h4>
-	</Header>
-	<Content>
-		<div class="container">
-			<div class="row pb-2">
-				@Text
-			</div>
-			<div class="row pb-2">
-				Description: <input class="form-control w-100" @oninput="ModalNameChanged" />
-			</div>
-			<div class="row pb-2">
-				<span>
-					<input type="radio" name="amount_type" checked @onchange=@(()=>SetAmountType("value")) />
-					Value @(_isAddingDeduction ? "deduction" : "allowance")
-				</span>
-				<span>
-					<input type="radio" name="amount_type" @onchange=@(()=>SetAmountType("percentage")) />
-					Percentage @(_isAddingDeduction ? "deduction" : "allowance")
-				</span>
-			</div>
-			<div class="row pb-2">
-				Amount: <input class="form-control w-100" type="number" @oninput="ModalAmountChanged" />
-			</div>
-		</div>
-	</Content>
-	<Footer>
-		@*If you want to hide Header remove the whole Footer definition"*@
-		<button class="btn btn-warning ml-2" @onclick="CancelDialog">Cancel</button>
-		<button class="btn btn-primary ml-2" @onclick="AcceptDialog" disabled="@isModalInValid">Ok</button>
-	</Footer>
+             OnOpen="OnOpen"
+             OnClose="OnClose">
+    <Header>
+        @*If you want to hide Header remove the whole Header definition and set ShowCloseButton="false"*@
+        <h4>@Title</h4>
+    </Header>
+    <Content>
+        <div class="container">
+            <div class="row pb-2">
+                @Text
+            </div>
+            <div class="row pb-2">
+                Description: <input class="form-control w-100" @oninput="ModalNameChanged" />
+            </div>
+            <div class="row pb-2">
+                <span>
+                    <input type="radio" name="amount_type" checked @onchange=@(()=>SetAmountType("value")) />
+                    Value @(_isAddingDeduction ? "deduction" : "allowance")
+                </span>
+                <span>
+                    <input type="radio" name="amount_type" @onchange=@(()=>SetAmountType("percentage")) />
+                    Percentage @(_isAddingDeduction ? "deduction" : "allowance")
+                </span>
+            </div>
+            <div class="row pb-2">
+                Amount: <input class="form-control w-100" type="number" @oninput="ModalAmountChanged" />
+            </div>
+            <div class="row pb-2">
+                <span><input type="checkbox" @bind="_isTaxable" /> Is Taxable</span>
+            </div>
+        </div>
+    </Content>
+    <Footer>
+        @*If you want to hide Header remove the whole Footer definition"*@
+        <button class="btn btn-warning ml-2" @onclick="CancelDialog">Cancel</button>
+        <button class="btn btn-primary ml-2" @onclick="AcceptDialog" disabled="@isModalInValid">Ok</button>
+    </Footer>
 </ModalDialog>
 
 <hr style="border: 2px solid black;" />
 @if (details is not null && details.NetSalary > 0)
 {
-	<table>
-		@if (_showPegged && USDRate != null)
-		{
-			<thead>
-				<tr>
-					<th></th>
-					<th></th>
-					<th>USD Pegged values</th>
-				</tr>
-			</thead>
-		}
-		<tbody>
-			<tr>
-				<td>Basic Salary</td>
-				<td>@string.Format(cultureInfo,"{0:C2}", @details.BasicSalary)</td>
-				@if (_showPegged && basicForPegging > 0 && baseRate > 0 && USDRate != null)
-				{
-					<td>
-						<span>@string.Format(cultureInfo,"{0:C2}", basicForPegging/baseRate*USDRate.Selling)</span>
-						@if (_useAlternateBasic)
-						{
-							<span>&nbsp; <i>(For Basic Salary of @string.Format(cultureInfo,"{0:C2}", alt_BasicSalary))</i></span>
-						}
-					</td>
-				}
-			</tr>
-			@if (details.BasicSalary != details.GrossSalary)
-			{
-				<tr>
-					<td>Gross Salary</td>
-					<td>@string.Format(cultureInfo,"{0:C2}", @details.GrossSalary)</td>
-				</tr>
-			}
+    <table>
+        @if (_showPegged && USDRate != null)
+        {
+            <thead>
+                <tr>
+                    <th></th>
+                    <th></th>
+                    <th>USD Pegged values</th>
+                </tr>
+            </thead>
+        }
+        <tbody>
+            <tr>
+                <td>Basic Salary</td>
+                <td>@string.Format(cultureInfo,"{0:C2}", @details.BasicSalary)</td>
+                @if (_showPegged && basicForPegging > 0 && baseRate > 0 && USDRate != null)
+                {
+                    <td>
+                        <span>@string.Format(cultureInfo,"{0:C2}", basicForPegging/baseRate*USDRate.Selling)</span>
+                        @if (_useAlternateBasic)
+                        {
+                            <span>&nbsp; <i>(For Basic Salary of @string.Format(cultureInfo,"{0:C2}", alt_BasicSalary))</i></span>
+                        }
+                    </td>
+                }
+            </tr>
+            @if (details.BasicSalary != details.GrossSalary)
+            {
+                <tr>
+                    <td>Gross Salary</td>
+                    <td>@string.Format(cultureInfo,"{0:C2}", @details.GrossSalary)</td>
+                </tr>
+            }
 
-			<tr><td><br /></td></tr>
-			<tr style="text-decoration:underline">
-				<td>Deductions</td>
-				<td></td>
-			</tr>
-			@if (details.OtherFixedDeductions?.Count > 0)
-			{
-				@foreach (var item in details.OtherFixedDeductions)
-				{
-					<tr>
-						<td>@item.Name @(item.IsPercentage ? $"({item.Amount}%)" : "")</td>
-						<td>@string.Format(cultureInfo,"{0:C2}", @item.GetValue(details.BasicSalary))</td>
-					</tr>
-				}
-			}
-			<tr>
-				<td>EPF</td>
-				<td>@string.Format(cultureInfo,"{0:C2}", @details.EPFETFContributions.TotalEmployeeContribution)</td>
-			</tr>
-			@if (details.TaxAmount > 0)
-			{
-				<tr>
-					<td>API Tax</td>
-					<td>@string.Format(cultureInfo,"{0:C2}", @details.TaxAmount)</td>
-				</tr>
-			}
-			<tr style="font-weight:bold;">
-				<td>Total Deductions</td>
-				<td>@string.Format(cultureInfo,"{0:C2}", @details.TotalDeductions)</td>
-			</tr>
-			<tr><td><br /></td></tr>
-			<tr style="font-weight:bold;text-decoration:underline">
-				<td>Net Salary</td>
-				<td>@string.Format(cultureInfo,"{0:C2}", @details.NetSalary)</td>
-			</tr>
-			<tr><td><br /></td></tr>
-			<tr style="text-decoration:underline">
-				<td>Employer Contributions</td>
-				<td></td>
-			</tr>
-			<tr>
-				<td>EPF</td>
-				<td>@string.Format(cultureInfo,"{0:C2}", @details.EPFETFContributions.EPFEmployer)</td>
-			</tr>
-			<tr>
-				<td>ETF</td>
-				<td>@string.Format(cultureInfo,"{0:C2}", @details.EPFETFContributions.ETFEmployer)</td>
-			</tr>
-			<tr><td></td></tr>
-			<tr style="font-weight:bold;">
-				<td>Total Employer Contribution</td>
-				<td>@string.Format(cultureInfo,"{0:C2}", @details.EPFETFContributions.TotalEmployerContribution)</td>
-			</tr>
-			<tr><td><br /></td></tr>
-			<tr style="font-weight:bold;">
-				<td>Total EPF ETF Contribution</td>
-				<td>@string.Format(cultureInfo,"{0:C2}", @details.EPFETFContributions.TotalContribution)</td>
-			</tr>
-		</tbody>
-	</table>
-	<hr style="border: 2px solid black;" />
+            <tr><td><br /></td></tr>
+            <tr style="text-decoration:underline">
+                <td>Deductions</td>
+                <td></td>
+            </tr>
+            @if (details.Deductions?.Count > 0)
+            {
+                @foreach (var item in details.Deductions)
+                {
+                    <tr>
+                        <td>@item.Name @(item.IsPercentage ? $"({item.Amount}%)" : "")</td>
+                        <td>@string.Format(cultureInfo,"{0:C2}", @item.Value)</td>
+                    </tr>
+                }
+            }
+            <tr>
+                <td>EPF</td>
+                <td>@string.Format(cultureInfo,"{0:C2}", @details.EPFETFContributions.TotalEmployeeContribution)</td>
+            </tr>
+            @if (details.TaxAmount > 0)
+            {
+                <tr>
+                    <td>API Tax</td>
+                    <td>@string.Format(cultureInfo,"{0:C2}", @details.TaxAmount)</td>
+                </tr>
+            }
+            <tr style="font-weight:bold;">
+                <td>Total Deductions</td>
+                <td>@string.Format(cultureInfo,"{0:C2}", @details.TotalDeductions)</td>
+            </tr>
+            <tr><td><br /></td></tr>
+            <tr style="font-weight:bold;text-decoration:underline">
+                <td>Net Salary</td>
+                <td>@string.Format(cultureInfo,"{0:C2}", @details.NetSalary)</td>
+            </tr>
+            <tr><td><br /></td></tr>
+            <tr style="text-decoration:underline">
+                <td>Employer Contributions</td>
+                <td></td>
+            </tr>
+            <tr>
+                <td>EPF</td>
+                <td>@string.Format(cultureInfo,"{0:C2}", @details.EPFETFContributions.EPFEmployer)</td>
+            </tr>
+            <tr>
+                <td>ETF</td>
+                <td>@string.Format(cultureInfo,"{0:C2}", @details.EPFETFContributions.ETFEmployer)</td>
+            </tr>
+            <tr><td></td></tr>
+            <tr style="font-weight:bold;">
+                <td>Total Employer Contribution</td>
+                <td>@string.Format(cultureInfo,"{0:C2}", @details.EPFETFContributions.TotalEmployerContribution)</td>
+            </tr>
+            <tr><td><br /></td></tr>
+            <tr style="font-weight:bold;">
+                <td>Total EPF ETF Contribution</td>
+                <td>@string.Format(cultureInfo,"{0:C2}", @details.EPFETFContributions.TotalContribution)</td>
+            </tr>
+        </tbody>
+    </table>
+    <hr style="border: 2px solid black;" />
 }
 
 
 
 @code {
-	//Initial Lines
-	private readonly Guid SampleAllowanceGuid = new Guid("edbfa563-c93f-4f90-9f71-24fc545cc066");
-	private const string SampleAllowanceName = "TCoLA";
-	private const decimal SampleAllowancePercentage = 32.5m;
-	private decimal? _sampleAllowancePercentage = SampleAllowancePercentage;
-	private readonly List<SalaryLineItem> otherFixedDeductions = new List<SalaryLineItem> { new SalaryLineItem("Staff Wellfare", 75m, false) };
-	//private List<SalaryLineItem> fixedAllowances = new List<SalaryLineItem> { new SalaryLineItem("TCoLA", 32.5m, true) };
+    //Initial Lines
+    private readonly Guid SampleAllowanceGuid = new Guid("edbfa563-c93f-4f90-9f71-24fc545cc066");
+    private const string SampleAllowanceName = "TCoLA";
+    //private const decimal SampleAllowancePercentage = 32.5m;
+    private decimal? _sampleAllowancePercentage;// = SampleAllowancePercentage;
+    private readonly List<Deduction> otherFixedDeductions = new List<Deduction> { new Deduction("Staff Wellfare", 75m) };
+    //private List<SalaryLineItem> fixedAllowances = new List<SalaryLineItem> { new SalaryLineItem("TCoLA", 32.5m, true) };
 
-	private IExchangeRate USDRate;
-	private bool _showPegged = false;
-	private bool _useAlternateBasic = false;
-	private decimal baseRate = 200;
-	private decimal alt_BasicSalary = 0;
+    private IExchangeRate USDRate;
+    private bool _showPegged = false;
+    private bool _useAlternateBasic = false;
+    private decimal baseRate = 200;
+    private decimal alt_BasicSalary = 0;
 
-	//Tax Calculator selection
-	bool _useProposedTaxes = true;
-	SalaryCalculator.TaxCalculators _useProposedTaxCalculator = TaxCalculators.NewAPITaxCalculator_Proposed_On_22_10_11;
-	private SalaryCalculator.ITaxCalculator taxCalculator = SalaryCalculator.TaxCalculatorFactory.GetTaxCalculator(TaxCalculators.NewAPITaxCalculator_Proposed_On_22_10_11);
+    //Tax Calculator selection
+    bool _useProposedTaxes = true;
+    SalaryCalculator.TaxCalculators _useProposedTaxCalculator = TaxCalculators.NewAPITaxCalculator_Proposed_On_22_10_11;
+    private SalaryCalculator.ITaxCalculator taxCalculator = SalaryCalculator.TaxCalculatorFactory.GetTaxCalculator(TaxCalculators.NewAPITaxCalculator_Proposed_On_22_10_11);
 
-	private bool _isAddingDeduction;
+    private bool _isAddingDeduction;
 
-	private Dictionary<Guid, SalaryLineItem> _otherFixedDeductions { get; set; }
-	private Dictionary<Guid, SalaryLineItem> _fixedAllowances { get; set; }
+    private Dictionary<Guid, Deduction> _deductions = new();
+    private Dictionary<Guid, Allowance> _allowances = new();
 
-	protected override async Task OnInitializedAsync()
-	{
-		_otherFixedDeductions = otherFixedDeductions.ToDictionary(x => Guid.NewGuid(), y => y);
-		//_fixedAllowances = fixedAllowances.ToDictionary(x => Guid.NewGuid(), y => y);
-		_fixedAllowances = new Dictionary<Guid, SalaryLineItem> { { SampleAllowanceGuid, new SalaryLineItem(SampleAllowanceName, SampleAllowancePercentage, true) } };
-		USDRate = await ExchangeRateProvider.GetExchangeRate(CurrencyCode.USD);
+    protected override async Task OnInitializedAsync()
+    {
+        _deductions = otherFixedDeductions.ToDictionary(x => Guid.NewGuid(), y => y);
+        //_allowances = new Dictionary<Guid, Allowance> { { SampleAllowanceGuid, new Allowance(SampleAllowanceName, SampleAllowancePercentage, true) } };
+        USDRate = await ExchangeRateProvider.GetExchangeRate(CurrencyCode.USD);
 
-		Calculate();
-	}
+        Calculate();
+    }
 
-	private CultureInfo cultureInfo = new CultureInfo("si-LK");
+    private CultureInfo cultureInfo = new CultureInfo("si-LK");
 
-	private decimal basicSalary = 0;
-	private decimal basicForPegging => _useAlternateBasic ? alt_BasicSalary : basicSalary;
+    private decimal basicSalary = 0;
+    private decimal basicForPegging => _useAlternateBasic ? alt_BasicSalary : basicSalary;
 
-	private SalaryCalculator.SalaryDetails? details = null;
+    private SalaryCalculator.SalaryDetails? details = null;
 
-	private void AmountChanged(Microsoft.AspNetCore.Components.ChangeEventArgs args)
-	{
-		if (decimal.TryParse((string)args.Value, out basicSalary))
-		{
-			Calculate();
-		}
-		else
-		{
-			details = null;
-		}
-	}
+    private void AmountChanged(Microsoft.AspNetCore.Components.ChangeEventArgs args)
+    {
+        if (decimal.TryParse((string)args.Value, out basicSalary))
+        {
+            Calculate();
+        }
+        else
+        {
+            details = null;
+        }
+    }
 
-	private void SetSampleAllowance(Microsoft.AspNetCore.Components.ChangeEventArgs args, decimal? value = null)
-	{
-		if (value.HasValue)
-		{
-			_sampleAllowancePercentage = value.Value;
-			_fixedAllowances[SampleAllowanceGuid] = new SalaryLineItem(SampleAllowanceName, _sampleAllowancePercentage.Value, true);
-		}
-		else
-		{
-			_sampleAllowancePercentage = null;
-			if (_fixedAllowances.ContainsKey(SampleAllowanceGuid))
-			{
-				_fixedAllowances.Remove(SampleAllowanceGuid);
-			}
-		}
-		Calculate();
-	}
+    private bool _useSampleTiredAllowance = true;
+    private ITierdAllowanceScheme _sampleTiredAllowanceScheme = TierdAllowanceSchemeFactory.GetTiredAllowanceScheme(TierdAllowanceSchemes.IFS_April2023);
 
-	private void ALT_BasicSalaryChanged(Microsoft.AspNetCore.Components.ChangeEventArgs args)
-	{
-		if (decimal.TryParse((string)args.Value, out decimal v))
-		{
-			alt_BasicSalary = v;
-		}
-		else
-		{
-			alt_BasicSalary = 0;
-		}
-	}
+    private void SetUseSampleTiredAllowance(Microsoft.AspNetCore.Components.ChangeEventArgs args)
+    {
+        _useSampleTiredAllowance = (bool?)args.Value ?? true;
+        Calculate();
+    }
+    private void SetSampleAllowance(Microsoft.AspNetCore.Components.ChangeEventArgs args, decimal? value = null)
+    {
+        if (value.HasValue)
+        {
+            _sampleAllowancePercentage = value.Value;
+            _tempAllowances[SampleAllowanceGuid] = new Data.SalaryLineItemModel(SampleAllowanceName, _sampleAllowancePercentage.Value, true, true);
+        }
+        else
+        {
+            _sampleAllowancePercentage = null;
+            if (_tempAllowances.ContainsKey(SampleAllowanceGuid))
+            {
+                _tempAllowances.Remove(SampleAllowanceGuid);
+            }
+        }
+        Calculate();
+    }
 
-	private void BaseRateChanged(Microsoft.AspNetCore.Components.ChangeEventArgs args)
-	{
-		if (decimal.TryParse((string)args.Value, out decimal v))
-		{
-			baseRate = v;
-		}
-		else
-		{
-			baseRate = 0;
-		}
-	}
+    private void ALT_BasicSalaryChanged(Microsoft.AspNetCore.Components.ChangeEventArgs args)
+    {
+        if (decimal.TryParse((string)args.Value, out decimal v))
+        {
+            alt_BasicSalary = v;
+        }
+        else
+        {
+            alt_BasicSalary = 0;
+        }
+    }
 
-	Dictionary<string, object> baseRateAtts;
+    private void BaseRateChanged(Microsoft.AspNetCore.Components.ChangeEventArgs args)
+    {
+        if (decimal.TryParse((string)args.Value, out decimal v))
+        {
+            baseRate = v;
+        }
+        else
+        {
+            baseRate = 0;
+        }
+    }
 
-	private void ShowPeggedChanged(Microsoft.AspNetCore.Components.ChangeEventArgs args)
-	{
-		_showPegged = (bool?)args.Value ?? false;
-		if (_showPegged)
-		{
-			baseRateAtts = new Dictionary<string, object> { { "value", baseRate } };
-			_useAlternateBasic = false;
-		}
-		Calculate();
-	}
+    Dictionary<string, object> baseRateAtts;
 
-	private void SetUseProposedTaxes(Microsoft.AspNetCore.Components.ChangeEventArgs args)
-	{
-		_useProposedTaxes = (bool?)args.Value ?? false;
-		if (_useProposedTaxes)
-		{
-			//Resetting proposed tax calculator to match with defult checked Radio Button
-			_useProposedTaxCalculator = TaxCalculators.NewAPITaxCalculator_Proposed_On_22_10_11;
-		}
-		SetTaxCalculator();
-	}
+    private void ShowPeggedChanged(Microsoft.AspNetCore.Components.ChangeEventArgs args)
+    {
+        _showPegged = (bool?)args.Value ?? false;
+        if (_showPegged)
+        {
+            baseRateAtts = new Dictionary<string, object> { { "value", baseRate } };
+            _useAlternateBasic = false;
+        }
+        Calculate();
+    }
 
-	private void SetUseProposedTaxesMode(SalaryCalculator.TaxCalculators calculator)
-	{
-		_useProposedTaxCalculator = calculator;
-		SetTaxCalculator();
-	}
+    private void SetUseProposedTaxes(Microsoft.AspNetCore.Components.ChangeEventArgs args)
+    {
+        _useProposedTaxes = (bool?)args.Value ?? false;
+        if (_useProposedTaxes)
+        {
+            //Resetting proposed tax calculator to match with defult checked Radio Button
+            _useProposedTaxCalculator = TaxCalculators.NewAPITaxCalculator_Proposed_On_22_10_11;
+        }
+        SetTaxCalculator();
+    }
 
-	private void SetTaxCalculator()
-	{
-		if (_useProposedTaxes)
-		{
-			taxCalculator = SalaryCalculator.TaxCalculatorFactory.GetTaxCalculator(_useProposedTaxCalculator);
-		}
-		else
-		{
-			taxCalculator = SalaryCalculator.TaxCalculatorFactory.GetTaxCalculator(TaxCalculators.APITaxCalculator_Old);
-		}
-		Calculate();
-	}
+    private void SetUseProposedTaxesMode(SalaryCalculator.TaxCalculators calculator)
+    {
+        _useProposedTaxCalculator = calculator;
+        SetTaxCalculator();
+    }
+
+    private void SetTaxCalculator()
+    {
+        if (_useProposedTaxes)
+        {
+            taxCalculator = SalaryCalculator.TaxCalculatorFactory.GetTaxCalculator(_useProposedTaxCalculator);
+        }
+        else
+        {
+            taxCalculator = SalaryCalculator.TaxCalculatorFactory.GetTaxCalculator(TaxCalculators.APITaxCalculator_Old);
+        }
+        Calculate();
+    }
 
 
-	Dictionary<string, object> alt_BasicSalaryAtts;
+    Dictionary<string, object> alt_BasicSalaryAtts;
 
-	private void UseAlternateBasicChanged(Microsoft.AspNetCore.Components.ChangeEventArgs args)
-	{
-		_useAlternateBasic = (bool?)args.Value ?? false;
+    private void UseAlternateBasicChanged(Microsoft.AspNetCore.Components.ChangeEventArgs args)
+    {
+        _useAlternateBasic = (bool?)args.Value ?? false;
 
-		if (_useAlternateBasic)
-		{
-			alt_BasicSalaryAtts = new Dictionary<string, object> { { "value", alt_BasicSalary } };
-		}
-	}
+        if (_useAlternateBasic)
+        {
+            alt_BasicSalaryAtts = new Dictionary<string, object> { { "value", alt_BasicSalary } };
+        }
+    }
 
-	private void Calculate()
-	{
-		details = new SalaryCalculator.SalaryDetails(taxCalculator, basicSalary, fixedAllowances: _fixedAllowances?.Values.ToList(), otherFixedDeductions: _otherFixedDeductions?.Values.ToList());
-	}
+    TierdllowanceResponse? _tierAllowanceResponse = null;
 
-	private void DeleteItem(Guid id, bool isADeduction)
-	{
-		if (isADeduction && _otherFixedDeductions.ContainsKey(id))
-			_otherFixedDeductions.Remove(id);
-		else if (!isADeduction && _fixedAllowances.ContainsKey(id))
-			_fixedAllowances.Remove(id);
+    private void Calculate()
+    {
+        _allowances = _tempAllowances?.ToDictionary(x => x.Key, y => y.Value.GetAllowance(basicSalary)) ?? new Dictionary<Guid, Allowance>();
+        _deductions = _tempDeductions?.ToDictionary(x => x.Key, y => y.Value.GetDeduction(basicSalary)) ?? new Dictionary<Guid, Deduction>();
+        if (_useSampleTiredAllowance)
+        {
+            details = new SalaryCalculator.SalaryDetails(taxCalculator, basicSalary, _sampleTiredAllowanceScheme, allowances: _allowances?.Values.ToList(), deductions: _deductions?.Values.ToList());
+            _tierAllowanceResponse = _sampleTiredAllowanceScheme.GetTierdAllowance(basicSalary);
+        }
+        else
+        {
+            details = new SalaryCalculator.SalaryDetails(taxCalculator, basicSalary, allowances: _allowances?.Values.ToList(), deductions: _deductions?.Values.ToList());
+            _tierAllowanceResponse = null;
+        }
 
-		Calculate();
-	}
+    }
 
-	#region Modal
-	public async Task OpenDeductionDialog()
-	{
-		_isAddingDeduction = true;
-		await _dialog.Open();
-	}
+    private void DeleteItem(Guid id, bool isADeduction)
+    {
+        if (isADeduction && _tempDeductions.ContainsKey(id))
+            _tempDeductions.Remove(id);
+        else if (!isADeduction && _tempAllowances.ContainsKey(id))
+            _tempAllowances.Remove(id);
 
-	public async Task OpenAllowanceDialog()
-	{
-		_isAddingDeduction = false;
-		await _dialog.Open();
-	}
+        Calculate();
+    }
 
-	public string Title => $"Add a {(_isAddingDeduction ? "deduction" : "allowance")}";
-	public string Text => $"Please enter {(_isAddingDeduction ? "deduction" : "allowance")} reason and amount";
+    #region Modal
+    public async Task OpenDeductionDialog()
+    {
+        _isAddingDeduction = true;
+        _isTaxable = false;
+        await _dialog.Open();
+    }
 
-	private bool isModalInValid => string.IsNullOrWhiteSpace(_name) || _value < 1;
+    public async Task OpenAllowanceDialog()
+    {
+        _isAddingDeduction = false;
+        _isTaxable = true;
+        await _dialog.Open();
+    }
 
-	private ModalDialog _dialog;
-	private string _name;
-	private string _amount;
-	private decimal _value;
-	private bool _isPercentageAmount;
+    public string Title => $"Add a {(_isAddingDeduction ? "deduction" : "allowance")}";
+    public string Text => $"Please enter {(_isAddingDeduction ? "deduction" : "allowance")} reason and amount";
 
-	private void SetAmountType(string type)
-	{
-		switch (type)
-		{
-			case "percentage":
-				{
-					_isPercentageAmount = true;
-					break;
-				}
-			default:
-				_isPercentageAmount = false;
-				break;
-		}
-	}
+    private bool isModalInValid => string.IsNullOrWhiteSpace(_name) || _value < 1;
 
-	private void ModalAmountChanged(Microsoft.AspNetCore.Components.ChangeEventArgs args)
-	{
-		if (string.IsNullOrWhiteSpace((string)args.Value))
-			_value = 0;
+    private ModalDialog _dialog;
+    private string _name;
+    private string _amount;
+    private decimal _value;
+    private bool _isPercentageAmount;
+    private bool _isTaxable;
 
-		if (!decimal.TryParse((string)args.Value, out _value))
-		{
-			_value = -1;
-		}
-	}
+    private void SetAmountType(string type)
+    {
+        switch (type)
+        {
+            case "percentage":
+                {
+                    _isPercentageAmount = true;
+                    break;
+                }
+            default:
+                _isPercentageAmount = false;
+                break;
+        }
+    }
 
-	private void ModalNameChanged(Microsoft.AspNetCore.Components.ChangeEventArgs args)
-	{
-		_name = (string)args.Value;
-	}
+    private void ModalAmountChanged(Microsoft.AspNetCore.Components.ChangeEventArgs args)
+    {
+        if (string.IsNullOrWhiteSpace((string)args.Value))
+            _value = 0;
 
-	public async Task OpenDialog()
-	{
-		await _dialog.Open();
-	}
+        if (!decimal.TryParse((string)args.Value, out _value))
+        {
+            _value = -1;
+        }
+    }
 
-	private async Task AcceptDialog()
-	{
-		if (_dialog.IsOpen)
-		{
-			if (_isAddingDeduction)
-				_otherFixedDeductions.Add(Guid.NewGuid(), new(_name, _value, _isPercentageAmount));
-			else
-				_fixedAllowances.Add(Guid.NewGuid(), new(_name, _value, _isPercentageAmount));
+    private void ModalNameChanged(Microsoft.AspNetCore.Components.ChangeEventArgs args)
+    {
+        _name = (string)args.Value;
+    }
 
-			await _dialog.Close();
+    public async Task OpenDialog()
+    {
+        await _dialog.Open();
+    }
 
-			Calculate();
-		}
-	}
-	private async Task CancelDialog()
-	{
-		await _dialog.Close();
-	}
-	public async Task OnOpen()
-	{
-		_name = null;
-		_amount = null;
-	}
-	public async Task OnClose()
-	{
-		_name = null;
-		_amount = null;
-	}
-	#endregion Modal
+    private Dictionary<Guid, Data.SalaryLineItemModel> _tempAllowances = new();
+    private Dictionary<Guid, Data.SalaryLineItemModel> _tempDeductions = new();
+
+    private async Task AcceptDialog()
+    {
+        if (_dialog.IsOpen)
+        {
+            if (_isAddingDeduction)
+            {
+                _tempDeductions.Add(Guid.NewGuid(), new(_name, _value, _isPercentageAmount, _isTaxable));
+            }
+            else
+            {
+                _tempAllowances.Add(Guid.NewGuid(), new(_name, _value, _isPercentageAmount, _isTaxable));
+            }
+
+            await _dialog.Close();
+
+            Calculate();
+        }
+    }
+    private async Task CancelDialog()
+    {
+        await _dialog.Close();
+    }
+    public async Task OnOpen()
+    {
+        _name = null;
+        _amount = null;
+    }
+    public async Task OnClose()
+    {
+        _name = null;
+        _amount = null;
+    }
+    #endregion Modal
 }
