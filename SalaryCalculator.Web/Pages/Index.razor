@@ -14,11 +14,11 @@
 <button @onclick="OpenDeductionDialog" class="btn btn-primary">Add a deduction</button>
 <hr />
 <div class="row pb-2">
-    <span><input type="checkbox" checked @onchange="SetUseSampleTiredAllowance" /> Use sample tierd allowance</span>
+    <span><input type="checkbox" checked @onchange="SetUseSampleTiredAllowance" /> Add sample tierd allowance</span>
 </div>
 <div class="row pb-2">
-    <div class="col">
-        Add an allowance of
+    <div class="col" style="font-style:italic; color:gray">
+        Add an taxable allowance of
         <span>
             <input type="radio" name="sample_allowance" @onchange=@((e)=>SetSampleAllowance(e,32.5m)) value="32.5" />
             32.5%
@@ -37,7 +37,7 @@
         </span>
     </div>
 </div>
-<button @onclick="OpenAllowanceDialog" class="btn btn-primary">Add another fixed allowance</button>
+<button @onclick="OpenAllowanceDialog" class="btn btn-primary">Add another allowance</button>
 <hr />
 
 <span><input type="checkbox" checked @onchange="SetUseProposedTaxes" /> Use new tax to be effected from @(new DateTime(2023, 1, 1).ToString("yyyy/MMM/d", cultureInfo))</span>
@@ -85,7 +85,8 @@
         <tbody>
             <tr style="text-decoration:underline">
                 <td>Deductions</td>
-                <td>Taxable</td>
+                <td></td>
+                <td></td>
                 <td></td>
             </tr>
             @foreach (var item in _deductions)
@@ -93,7 +94,7 @@
                 <tr>
                     <td>@item.Value.Name @(item.Value.IsPercentage ? $"({item.Value.Amount}%)" : "")</td>
                     <td>@string.Format(cultureInfo,"{0:C2}", @item.Value.Value)</td>
-                    <td>@(item.Value.IsTaxable ? "✓" : "✗")</td>
+                    <td>@(item.Value.IsTaxable ? "Taxable - ✓" : "Taxable - ✗")</td>
                     <td><button @onclick="()=>DeleteItem(item.Key,true)" class="btn btn-primary">Delete</button></td>
                 </tr>
             }
@@ -136,11 +137,13 @@
                 <td>Tierd Allowance</td>
                 <td></td>
                 <td></td>
+                <td></td>
             </tr>
             <tr>
                 <td>@_tierAllowanceResponse.SchemeName</td>
                 <td>@string.Format(cultureInfo,"{0:C2}", _tierAllowanceResponse.Total)</td>
                 <td>@(_tierAllowanceResponse.Description)</td>
+                <td>@(_tierAllowanceResponse.TierdAllowances.All(x => x.IsTaxable) ? "Taxable - ✓" : _tierAllowanceResponse.TierdAllowances.Any(x => x.IsTaxable) ? "Taxable - Only some tiers" : "Taxable - ✗")</td>
             </tr>
         </tbody>
     </table>
@@ -294,7 +297,7 @@
     private const string SampleAllowanceName = "TCoLA";
     //private const decimal SampleAllowancePercentage = 32.5m;
     private decimal? _sampleAllowancePercentage;// = SampleAllowancePercentage;
-    private readonly List<Deduction> otherFixedDeductions = new List<Deduction> { new Deduction("Staff Wellfare", 75m) };
+    private readonly List<Data.SalaryLineItemModel> otherFixedDeductions = new List<Data.SalaryLineItemModel> { new Data.SalaryLineItemModel("Staff Wellfare", 75m, false, false) };
     //private List<SalaryLineItem> fixedAllowances = new List<SalaryLineItem> { new SalaryLineItem("TCoLA", 32.5m, true) };
 
     private IExchangeRate USDRate;
@@ -315,7 +318,7 @@
 
     protected override async Task OnInitializedAsync()
     {
-        _deductions = otherFixedDeductions.ToDictionary(x => Guid.NewGuid(), y => y);
+        _tempDeductions = otherFixedDeductions.ToDictionary(x => Guid.NewGuid(), y => y);
         //_allowances = new Dictionary<Guid, Allowance> { { SampleAllowanceGuid, new Allowance(SampleAllowanceName, SampleAllowancePercentage, true) } };
         USDRate = await ExchangeRateProvider.GetExchangeRate(CurrencyCode.USD);
 
