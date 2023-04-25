@@ -1,6 +1,6 @@
 ﻿namespace SalaryCalculator
 {
-    internal class APITaxCalculator : ITaxCalculator
+    internal class APITaxCalculator : DefaultTaxCalulator
     {
         public decimal TaxReliefAmount { get; }
         public decimal TaxTierAmount { get; }
@@ -15,9 +15,9 @@
             MaxTier = maxTier;
         }
 
-        public decimal CalculateTaxAmount(decimal basicSalary, IEnumerable<Allowance>? allowances = null, IEnumerable<Deduction>? deductions = null)
+        public override decimal CalculateTaxAmount(decimal basicSalary, IEnumerable<Allowance>? allowances = null, IEnumerable<Deduction>? deductions = null)
         {
-            var monthlyProfit = basicSalary + (allowances?.Where(a => a.IsTaxable).Sum(x => x.Value) ?? 0) - (deductions?.Where(a => a.IsTaxable).Sum(x => x.Value) ?? 0);
+            var monthlyProfit = CalculateTaxableTotal(basicSalary, allowances, deductions);
             var tax = 0m;
 
             var currentTaxableAmount = monthlyProfit - TaxReliefAmount;
@@ -39,7 +39,7 @@
             return tax;
         }
 
-        public Task<decimal> CalculateTaxAmountAsync(decimal basicSalary, IEnumerable<Allowance>? allowances = null, IEnumerable<Deduction>? deductions = null, CancellationToken cancellationToken = default)
+        public override Task<decimal> CalculateTaxAmountAsync(decimal basicSalary, IEnumerable<Allowance>? allowances = null, IEnumerable<Deduction>? deductions = null, CancellationToken cancellationToken = default)
         {
             return Task.FromResult(CalculateTaxAmount(basicSalary, allowances, deductions));
         }

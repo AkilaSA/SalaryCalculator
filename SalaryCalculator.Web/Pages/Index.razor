@@ -2,6 +2,7 @@
 @using System.Globalization
 @using SalaryCalculator
 @inject IExchangeRateProvider ExchangeRateProvider
+@inject IJSRuntime JSRuntime
 
 <PageTitle>Salary Calculator</PageTitle>
 
@@ -226,6 +227,11 @@
                 </tr>
             }
 
+            <tr>
+                <td>Total for Tax</td>
+                <td>@string.Format(cultureInfo,"{0:C2}", @details.TotalForTax)</td>
+            </tr>
+
             <tr><td><br /></td></tr>
             <tr style="text-decoration:underline">
                 <td>Deductions</td>
@@ -316,8 +322,32 @@
     private Dictionary<Guid, Deduction> _deductions = new();
     private Dictionary<Guid, Allowance> _allowances = new();
 
+    private CultureInfo cultureInfo = new CultureInfo("si-LK");
+
+    //protected override async Task OnAfterRenderAsync(bool firstRender)
+    //{
+    //    if (firstRender)
+    //    {
+    //        var browserLocale = await JSRuntime.InvokeAsync<string>("getCulture");
+    //        if (!string.IsNullOrWhiteSpace(browserLocale))
+    //        {
+    //            try
+    //            {
+    //                cultureInfo = CultureInfo.GetCultureInfo(browserLocale, true);
+    //            }
+    //            catch
+    //            {
+    //                cultureInfo = new CultureInfo("si-LK");
+    //            }
+    //        }
+    //    }
+    //    await base.OnAfterRenderAsync(firstRender);
+    //}
+
     protected override async Task OnInitializedAsync()
     {
+
+
         _tempDeductions = otherFixedDeductions.ToDictionary(x => Guid.NewGuid(), y => y);
         //_allowances = new Dictionary<Guid, Allowance> { { SampleAllowanceGuid, new Allowance(SampleAllowanceName, SampleAllowancePercentage, true) } };
         USDRate = await ExchangeRateProvider.GetExchangeRate(CurrencyCode.USD);
@@ -325,7 +355,6 @@
         Calculate();
     }
 
-    private CultureInfo cultureInfo = new CultureInfo("si-LK");
 
     private decimal basicSalary = 0;
     private decimal basicForPegging => _useAlternateBasic ? alt_BasicSalary : basicSalary;

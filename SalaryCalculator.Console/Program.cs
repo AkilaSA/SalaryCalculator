@@ -32,6 +32,10 @@ while (true)
             //List<SalaryLineItem> _fixedAllowances = new List<SalaryLineItem> { new SalaryLineItem("TCoLA", 41, true) };
             var taxCalculator = TaxCalculatorFactory.GetTaxCalculator(TaxCalculators.NewAPITaxCalculator_Proposed_On_22_10_11);
 
+            var kaaa = await taxCalculator.CalculateTaxableTotalAsync(basic, k.GetAllowances(basic), _otherFixedDeductions);
+            var kaaaa = await taxCalculator.CalculateTaxAmountAsync(basic, k.GetAllowances(basic), _otherFixedDeductions);
+
+
             var details = new SalaryCalculator.SalaryDetails(taxCalculator, basic, tiredAllowanceScheme: k, deductions: _otherFixedDeductions);
             //var details = new SalaryCalculator.SalaryDetails(basic, otherFixedDeductions: deductions);
 
