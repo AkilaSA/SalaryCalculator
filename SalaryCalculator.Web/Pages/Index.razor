@@ -75,7 +75,7 @@
         <span>Alternate Basic Salary: <input type="number" min="0" placeholder="Base exchange rate" @oninput="ALT_BasicSalaryChanged" @attributes=alt_BasicSalaryAtts /></span>
         <br />
     }
-    <i>Curent Exchange Rate: <b>@USDRate.Selling.ToString("c",cultureInfo)</b> as of @USDRate.AsOf.ToOffset(new TimeSpan(5,30,0)).DateTime.ToString("yyyy/MMM/d tth:m:s",cultureInfo) - Live Source <a href="https://www.sampath.lk/rates-and-charges?activeTab=exchange-rates" target="_blank">Sampath Bank</a></i>
+    <i>Curent Exchange Rate: <b>@USDRate.Selling.ToString("c",cultureInfo)</b> as of @USDRate.AsOf.ToOffset(new TimeSpan(5,30,0)).DateTime.ToString(cultureInfo.DateTimeFormat.FullDateTimePattern, cultureInfo) - Live Source <a href="https://www.sampath.lk/rates-and-charges?activeTab=exchange-rates" target="_blank">Sampath Bank</a></i>
 }
 <hr />
 
@@ -113,6 +113,7 @@
                 <td></td>
                 <td></td>
                 <td></td>
+                <td></td>
             </tr>
             @foreach (var item in _allowances)
             {
@@ -123,6 +124,10 @@
                     @if (item.Key != SampleAllowanceGuid)
                     {
                         <td><button @onclick="()=>DeleteItem(item.Key,false)" class="btn btn-primary">Delete</button></td>
+                    }
+                    @if (item.Key == SampleAllowanceGuid && canShowPegged)
+                    {
+                        <td style="font-style:italic; color:gray">Not applied for USD pegged calculations</td>
                     }
                 </tr>
             }
@@ -139,12 +144,17 @@
                 <td></td>
                 <td></td>
                 <td></td>
+                <td></td>
             </tr>
             <tr>
                 <td>@_tierAllowanceResponse.SchemeName</td>
                 <td>@string.Format(cultureInfo,"{0:C2}", _tierAllowanceResponse.Total)</td>
                 <td>@(_tierAllowanceResponse.Description)</td>
                 <td>@(_tierAllowanceResponse.TierdAllowances.All(x => x.IsTaxable) ? "Taxable - ✓" : _tierAllowanceResponse.TierdAllowances.Any(x => x.IsTaxable) ? "Taxable - Only some tiers" : "Taxable - ✗")</td>
+                @if (canShowPegged)
+                {
+                    <td style="font-style:italic; color:gray">Not applied for USD pegged calculations</td>
+                }
             </tr>
         </tbody>
     </table>
@@ -208,28 +218,32 @@
             <tr>
                 <td>Basic Salary</td>
                 <td>@string.Format(cultureInfo,"{0:C2}", @details.BasicSalary)</td>
-                @if (_showPegged && basicForPegging > 0 && baseRate > 0 && USDRate != null)
+                @if (canShowPegged)
                 {
                     <td>
-                        <span>@string.Format(cultureInfo,"{0:C2}", basicForPegging/baseRate*USDRate.Selling)</span>
-                        @if (_useAlternateBasic)
-                        {
-                            <span>&nbsp; <i>(For Basic Salary of @string.Format(cultureInfo,"{0:C2}", alt_BasicSalary))</i></span>
-                        }
+                        @string.Format(cultureInfo, "{0:C2}", peggedDetails.BasicSalary);
                     </td>
                 }
             </tr>
-            @if (details.BasicSalary != details.GrossSalary)
-            {
-                <tr>
-                    <td>Gross Salary</td>
-                    <td>@string.Format(cultureInfo,"{0:C2}", @details.GrossSalary)</td>
-                </tr>
-            }
+
+            <tr>
+                <td>Gross Salary</td>
+                <td>@string.Format(cultureInfo,"{0:C2}", @details.GrossSalary)</td>
+                @if (canShowPegged)
+                {
+                    <td>
+                        <span>@string.Format(cultureInfo,"{0:C2}", peggedDetails.GrossSalary)</span>
+                    </td>
+                }
+            </tr>
 
             <tr>
                 <td>Total for Tax</td>
                 <td>@string.Format(cultureInfo,"{0:C2}", @details.TotalForTax)</td>
+                @if (canShowPegged)
+                {
+                    <td>@string.Format(cultureInfo,"{0:C2}", peggedDetails.TotalForTax)</td>
+                }
             </tr>
 
             <tr><td><br /></td></tr>
@@ -244,28 +258,55 @@
                     <tr>
                         <td>@item.Name @(item.IsPercentage ? $"({item.Amount}%)" : "")</td>
                         <td>@string.Format(cultureInfo,"{0:C2}", @item.Value)</td>
+                        @if (canShowPegged)
+                        {
+                            var d = peggedDetails.Deductions?.FirstOrDefault(x => x.Name == item.Name && x.Amount == item.Amount && x.IsPercentage == item.IsPercentage && x.IsTaxable == item.IsTaxable);
+                            if (d != null)
+                            {
+                                <td>@string.Format(cultureInfo,"{0:C2}", @d.Value)</td>
+                            }
+                        }
                     </tr>
                 }
             }
             <tr>
                 <td>EPF</td>
                 <td>@string.Format(cultureInfo,"{0:C2}", @details.EPFETFContributions.TotalEmployeeContribution)</td>
+                @if (canShowPegged)
+                {
+                    <td>@string.Format(cultureInfo,"{0:C2}", @peggedDetails.EPFETFContributions.TotalEmployeeContribution)</td>
+                }
             </tr>
-            @if (details.TaxAmount > 0)
+            @if (details.TaxAmount > 0 || (canShowPegged && peggedDetails.TaxAmount > 0))
             {
                 <tr>
                     <td>API Tax</td>
-                    <td>@string.Format(cultureInfo,"{0:C2}", @details.TaxAmount)</td>
+                    @if (details.TaxAmount > 0)
+                    {
+                        <td>@string.Format(cultureInfo,"{0:C2}", @details.TaxAmount)</td>
+                    }
+                    @if (canShowPegged && peggedDetails.TaxAmount > 0)
+                    {
+                        <td>@string.Format(cultureInfo,"{0:C2}", @peggedDetails.TaxAmount)</td>
+                    }
                 </tr>
             }
             <tr style="font-weight:bold;">
                 <td>Total Deductions</td>
                 <td>@string.Format(cultureInfo,"{0:C2}", @details.TotalDeductions)</td>
+                @if (canShowPegged)
+                {
+                    <td>@string.Format(cultureInfo,"{0:C2}", @peggedDetails.TotalDeductions)</td>
+                }
             </tr>
             <tr><td><br /></td></tr>
             <tr style="font-weight:bold;text-decoration:underline">
                 <td>Net Salary</td>
                 <td>@string.Format(cultureInfo,"{0:C2}", @details.NetSalary)</td>
+                @if (canShowPegged)
+                {
+                    <td>@string.Format(cultureInfo,"{0:C2}", @peggedDetails.NetSalary)</td>
+                }
             </tr>
             <tr><td><br /></td></tr>
             <tr style="text-decoration:underline">
@@ -275,20 +316,36 @@
             <tr>
                 <td>EPF</td>
                 <td>@string.Format(cultureInfo,"{0:C2}", @details.EPFETFContributions.EPFEmployer)</td>
+                @if (canShowPegged)
+                {
+                    <td>@string.Format(cultureInfo,"{0:C2}", @peggedDetails.EPFETFContributions.EPFEmployer)</td>
+                }
             </tr>
             <tr>
                 <td>ETF</td>
                 <td>@string.Format(cultureInfo,"{0:C2}", @details.EPFETFContributions.ETFEmployer)</td>
+                @if (canShowPegged)
+                {
+                    <td>@string.Format(cultureInfo,"{0:C2}", @peggedDetails.EPFETFContributions.ETFEmployer)</td>
+                }
             </tr>
             <tr><td></td></tr>
             <tr style="font-weight:bold;">
                 <td>Total Employer Contribution</td>
                 <td>@string.Format(cultureInfo,"{0:C2}", @details.EPFETFContributions.TotalEmployerContribution)</td>
+                @if (canShowPegged)
+                {
+                    <td>@string.Format(cultureInfo,"{0:C2}", @peggedDetails.EPFETFContributions.TotalEmployerContribution)</td>
+                }
             </tr>
             <tr><td><br /></td></tr>
             <tr style="font-weight:bold;">
                 <td>Total EPF ETF Contribution</td>
                 <td>@string.Format(cultureInfo,"{0:C2}", @details.EPFETFContributions.TotalContribution)</td>
+                @if (canShowPegged)
+                {
+                    <td>@string.Format(cultureInfo,"{0:C2}", @peggedDetails.EPFETFContributions.TotalContribution)</td>
+                }
             </tr>
         </tbody>
     </table>
@@ -306,7 +363,7 @@
     private readonly List<Data.SalaryLineItemModel> otherFixedDeductions = new List<Data.SalaryLineItemModel> { new Data.SalaryLineItemModel("Staff Wellfare", 75m, false, false) };
     //private List<SalaryLineItem> fixedAllowances = new List<SalaryLineItem> { new SalaryLineItem("TCoLA", 32.5m, true) };
 
-    private IExchangeRate USDRate;
+    private IExchangeRate? USDRate;
     private bool _showPegged = false;
     private bool _useAlternateBasic = false;
     private decimal baseRate = 200;
@@ -321,8 +378,6 @@
 
     private Dictionary<Guid, Deduction> _deductions = new();
     private Dictionary<Guid, Allowance> _allowances = new();
-
-    private CultureInfo cultureInfo = new CultureInfo("si-LK");
 
     //protected override async Task OnAfterRenderAsync(bool firstRender)
     //{
@@ -344,33 +399,42 @@
     //    await base.OnAfterRenderAsync(firstRender);
     //}
 
+    private CultureInfo cultureInfo = new CultureInfo("en-IN");
+
     protected override async Task OnInitializedAsync()
     {
-
+        cultureInfo.NumberFormat.CurrencySymbol = "Rs ";
 
         _tempDeductions = otherFixedDeductions.ToDictionary(x => Guid.NewGuid(), y => y);
         //_allowances = new Dictionary<Guid, Allowance> { { SampleAllowanceGuid, new Allowance(SampleAllowanceName, SampleAllowancePercentage, true) } };
-        USDRate = await ExchangeRateProvider.GetExchangeRate(CurrencyCode.USD);
+        try
+        {
+            USDRate = await ExchangeRateProvider.GetExchangeRate(CurrencyCode.USD);
+        }
+        catch
+        {
+            USDRate = null;
+        }
 
         Calculate();
     }
 
 
     private decimal basicSalary = 0;
+
     private decimal basicForPegging => _useAlternateBasic ? alt_BasicSalary : basicSalary;
+    private bool canShowPegged => _showPegged && basicForPegging > 0 && baseRate > 0 && USDRate != null && peggedDetails != null;
+
 
     private SalaryCalculator.SalaryDetails? details = null;
 
     private void AmountChanged(Microsoft.AspNetCore.Components.ChangeEventArgs args)
     {
-        if (decimal.TryParse((string)args.Value, out basicSalary))
+        if (!decimal.TryParse((string?)args.Value, out basicSalary) || basicSalary < 0)
         {
-            Calculate();
+            basicSalary = 0;
         }
-        else
-        {
-            details = null;
-        }
+        Calculate();
     }
 
     private bool _useSampleTiredAllowance = true;
@@ -409,6 +473,7 @@
         {
             alt_BasicSalary = 0;
         }
+        CalculatePegged();
     }
 
     private void BaseRateChanged(Microsoft.AspNetCore.Components.ChangeEventArgs args)
@@ -421,6 +486,7 @@
         {
             baseRate = 0;
         }
+        CalculatePegged();
     }
 
     Dictionary<string, object> baseRateAtts;
@@ -477,6 +543,7 @@
         {
             alt_BasicSalaryAtts = new Dictionary<string, object> { { "value", alt_BasicSalary } };
         }
+        CalculatePegged();
     }
 
     TierdllowanceResponse? _tierAllowanceResponse = null;
@@ -496,6 +563,29 @@
             _tierAllowanceResponse = null;
         }
 
+        CalculatePegged();
+    }
+
+    private SalaryDetails? peggedDetails = null;
+
+    private void CalculatePegged()
+    {
+        if (_showPegged && basicForPegging > 0 && baseRate > 0 && USDRate != null)
+        {
+
+            var al = _tempAllowances?.Where(x => x.Key != SampleAllowanceGuid).ToDictionary(x => x.Key, y => y.Value.GetAllowance(basicForPegging)) ?? new Dictionary<Guid, Allowance>();
+            var de = _tempDeductions?.ToDictionary(x => x.Key, y => y.Value.GetDeduction(basicForPegging)) ?? new Dictionary<Guid, Deduction>();
+
+            var gross = basicForPegging / baseRate * USDRate.Selling;
+            var alId = Guid.NewGuid();
+            al.Add(alId, new Allowance("Pegged Allowance", gross - basicForPegging, true));
+
+            peggedDetails = new SalaryCalculator.SalaryDetails(taxCalculator, basicForPegging, allowances: al?.Values.ToList(), deductions: de?.Values.ToList());
+        }
+        else
+        {
+            peggedDetails = null;
+        }
     }
 
     private void DeleteItem(Guid id, bool isADeduction)
