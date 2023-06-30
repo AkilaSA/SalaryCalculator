@@ -57,25 +57,39 @@
         </div>
     </div>
 }
-@if (USDRate != null)
+@if (exchangeRates != null && exchangeRates.Any())
 {
     <br />
-    <span><input type="checkbox" @onchange="ShowPeggedChanged" disabled="@(USDRate==null)" /> Calculate USD pegged basic Salary</span>
+    <span><input type="checkbox" @onchange="ShowPeggedChanged" disabled="@(exchangeRates == null || !exchangeRates.Any())" /> Calculate pegged basic Salary</span>
     <br />
 }
 
-@if (_showPegged && USDRate != null)
+@if (_showPegged && exchangeRates != null && exchangeRates.Any())
 {
-    <span>Base exchange rate for pegging: <input type="number" min="0" placeholder="Base exchange rate" @oninput="BaseRateChanged" @attributes=baseRateAtts /></span>
+    <span>
+        Select Currency:&nbsp
+        <select @onchange=@CurrencyChanged>
+            <option value="">Select currency ...</option>
+            @foreach (var rate in exchangeRates)
+            {
+                <option value="@rate.BaseCurrencyCode.ToString()">@rate.BaseCurrencyCode.ToString()</option>
+            }
+        </select>
+    </span>
     <br />
-    <span><input type="checkbox" @onchange="UseAlternateBasicChanged" /> Use alternate basic salary</span>
-    <br />
-    if (_useAlternateBasic)
+    @if (exchangeRate != null)
     {
-        <span>Alternate Basic Salary: <input type="number" min="0" placeholder="Base exchange rate" @oninput="ALT_BasicSalaryChanged" @attributes=alt_BasicSalaryAtts /></span>
+        <span>Base exchange rate for pegging: <input @bind-value="baseRate" type="number" min="0" placeholder="Base exchange rate" @oninput="BaseRateChanged" @attributes=baseRateAtts /></span>
         <br />
+        <span><input type="checkbox" @onchange="UseAlternateBasicChanged" /> Use alternate basic salary</span>
+        <br />
+        if (_useAlternateBasic)
+        {
+            <span>Alternate Basic Salary: <input type="number" min="0" placeholder="Base exchange rate" @oninput="ALT_BasicSalaryChanged" @attributes=alt_BasicSalaryAtts /></span>
+            <br />
+        }
+        <i>Curent Exchange Rate: <b>@exchangeRate.Selling.ToString("c",cultureInfo)</b> for 1 @exchangeRate.BaseCurrencyCode.ToString() as of @exchangeRate.AsOf.ToOffset(new TimeSpan(5,30,0)).DateTime.ToString(cultureInfo.DateTimeFormat.FullDateTimePattern, cultureInfo) - Live Source <a href="https://www.sampath.lk/rates-and-charges?activeTab=exchange-rates" target="_blank">Sampath Bank</a></i>
     }
-    <i>Curent Exchange Rate: <b>@USDRate.Selling.ToString("c",cultureInfo)</b> as of @USDRate.AsOf.ToOffset(new TimeSpan(5,30,0)).DateTime.ToString(cultureInfo.DateTimeFormat.FullDateTimePattern, cultureInfo) - Live Source <a href="https://www.sampath.lk/rates-and-charges?activeTab=exchange-rates" target="_blank">Sampath Bank</a></i>
 }
 <hr />
 
@@ -204,7 +218,7 @@
 @if (details is not null && details.NetSalary > 0)
 {
     <table>
-        @if (_showPegged && USDRate != null)
+        @if (_showPegged && exchangeRate != null)
         {
             <thead>
                 <tr>
@@ -355,6 +369,8 @@
 
 
 @code {
+    private Data.CurrencyRateHistory baseRates = Data.LKR_CurrencyRateHistoryProvider.Get();
+
     //Initial Lines
     private readonly Guid SampleAllowanceGuid = new Guid("edbfa563-c93f-4f90-9f71-24fc545cc066");
     private const string SampleAllowanceName = "TCoLA";
@@ -363,7 +379,9 @@
     private readonly List<Data.SalaryLineItemModel> otherFixedDeductions = new List<Data.SalaryLineItemModel> { new Data.SalaryLineItemModel("Staff Wellfare", 75m, false, false) };
     //private List<SalaryLineItem> fixedAllowances = new List<SalaryLineItem> { new SalaryLineItem("TCoLA", 32.5m, true) };
 
-    private IExchangeRate? USDRate;
+    //private string? _exchangeRateString;
+    private IExchangeRate? exchangeRate;// => (_exchangeRateString != null && exchangeRates != null && exchangeRates.Any() && Enum.TryParse<CurrencyCode>(_exchangeRateString, out CurrencyCode result)) ? (exchangeRates.SingleOrDefault(x => x.BaseCurrencyCode == result)) : null;
+    private List<IExchangeRate>? exchangeRates;
     private bool _showPegged = false;
     private bool _useAlternateBasic = false;
     private decimal baseRate = 200;
@@ -406,14 +424,13 @@
         cultureInfo.NumberFormat.CurrencySymbol = "Rs ";
 
         _tempDeductions = otherFixedDeductions.ToDictionary(x => Guid.NewGuid(), y => y);
-        //_allowances = new Dictionary<Guid, Allowance> { { SampleAllowanceGuid, new Allowance(SampleAllowanceName, SampleAllowancePercentage, true) } };
         try
         {
-            USDRate = await ExchangeRateProvider.GetExchangeRate(CurrencyCode.USD);
+            exchangeRates = await ExchangeRateProvider.GetExchangeRates();
         }
         catch
         {
-            USDRate = null;
+            exchangeRates = null;
         }
 
         Calculate();
@@ -423,7 +440,7 @@
     private decimal basicSalary = 0;
 
     private decimal basicForPegging => _useAlternateBasic ? alt_BasicSalary : basicSalary;
-    private bool canShowPegged => _showPegged && basicForPegging > 0 && baseRate > 0 && USDRate != null && peggedDetails != null;
+    private bool canShowPegged => _showPegged && basicForPegging > 0 && baseRate > 0 && exchangeRates != null && exchangeRates.Any() && peggedDetails != null;
 
 
     private SalaryCalculator.SalaryDetails? details = null;
@@ -476,6 +493,25 @@
         CalculatePegged();
     }
 
+    private void CurrencyChanged(Microsoft.AspNetCore.Components.ChangeEventArgs args)
+    {
+        if (!string.IsNullOrEmpty(args.Value?.ToString()) && Enum.TryParse<CurrencyCode>(args.Value.ToString(), out CurrencyCode currencyCode))
+        {
+            var r = baseRates.Details.SingleOrDefault(x => x.CurrencyCode == currencyCode);
+            if (r != null)
+            {
+                baseRate = Math.Floor(r.BaseCurrencyUnits);
+            }
+            else
+            {
+                baseRate = 0;
+            }
+
+            exchangeRate = exchangeRates?.SingleOrDefault(x => x.BaseCurrencyCode == currencyCode);
+        }
+        CalculatePegged();
+    }
+
     private void BaseRateChanged(Microsoft.AspNetCore.Components.ChangeEventArgs args)
     {
         if (decimal.TryParse((string)args.Value, out decimal v))
@@ -498,6 +534,10 @@
         {
             baseRateAtts = new Dictionary<string, object> { { "value", baseRate } };
             _useAlternateBasic = false;
+        }
+        else
+        {
+            exchangeRate = null;
         }
         Calculate();
     }
@@ -570,13 +610,13 @@
 
     private void CalculatePegged()
     {
-        if (_showPegged && basicForPegging > 0 && baseRate > 0 && USDRate != null)
+        if (_showPegged && basicForPegging > 0 && baseRate > 0 && exchangeRate != null)
         {
 
             var al = _tempAllowances?.Where(x => x.Key != SampleAllowanceGuid).ToDictionary(x => x.Key, y => y.Value.GetAllowance(basicForPegging)) ?? new Dictionary<Guid, Allowance>();
             var de = _tempDeductions?.ToDictionary(x => x.Key, y => y.Value.GetDeduction(basicForPegging)) ?? new Dictionary<Guid, Deduction>();
 
-            var gross = basicForPegging / baseRate * USDRate.Selling;
+            var gross = basicForPegging / baseRate * exchangeRate.Selling;
             var alId = Guid.NewGuid();
             al.Add(alId, new Allowance("Pegged Allowance", gross - basicForPegging, true));
 
