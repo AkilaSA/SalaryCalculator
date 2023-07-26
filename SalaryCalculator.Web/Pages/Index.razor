@@ -69,7 +69,7 @@
     <span>
         Select Currency:&nbsp
         <select @onchange=@CurrencyChanged>
-            <option value="">Select currency ...</option>
+            <option value="" disabled selected>Select currency ...</option>
             @foreach (var rate in exchangeRates)
             {
                 <option value="@rate.BaseCurrencyCode.ToString()">@rate.BaseCurrencyCode.ToString()</option>
@@ -374,13 +374,11 @@
     //Initial Lines
     private readonly Guid SampleAllowanceGuid = new Guid("edbfa563-c93f-4f90-9f71-24fc545cc066");
     private const string SampleAllowanceName = "TCoLA";
-    //private const decimal SampleAllowancePercentage = 32.5m;
-    private decimal? _sampleAllowancePercentage;// = SampleAllowancePercentage;
+    private decimal? _sampleAllowancePercentage;
     private readonly List<Data.SalaryLineItemModel> otherFixedDeductions = new List<Data.SalaryLineItemModel> { new Data.SalaryLineItemModel("Staff Wellfare", 75m, false, false) };
-    //private List<SalaryLineItem> fixedAllowances = new List<SalaryLineItem> { new SalaryLineItem("TCoLA", 32.5m, true) };
 
-    //private string? _exchangeRateString;
-    private IExchangeRate? exchangeRate;// => (_exchangeRateString != null && exchangeRates != null && exchangeRates.Any() && Enum.TryParse<CurrencyCode>(_exchangeRateString, out CurrencyCode result)) ? (exchangeRates.SingleOrDefault(x => x.BaseCurrencyCode == result)) : null;
+
+    private IExchangeRate? exchangeRate;
     private List<IExchangeRate>? exchangeRates;
     private bool _showPegged = false;
     private bool _useAlternateBasic = false;
