@@ -15,9 +15,9 @@
 <button @onclick="OpenDeductionDialog" class="btn btn-primary">Add a deduction</button>
 <hr />
 <div class="row pb-2">
-    <span><input type="checkbox" checked @onchange="SetUseSampleTiredAllowance" /> Add sample tierd allowance</span>
+    <span><input type="checkbox" @onchange="SetUseSampleTiredAllowance" /> Add sample tierd allowance</span>
 </div>
-<div class="row pb-2">
+@* <div class="row pb-2">
     <div class="col" style="font-style:italic; color:gray">
         Add an taxable allowance of
         <span>
@@ -37,7 +37,7 @@
             None
         </span>
     </div>
-</div>
+</div> *@
 <button @onclick="OpenAllowanceDialog" class="btn btn-primary">Add another allowance</button>
 <hr />
 
@@ -88,7 +88,7 @@
             <span>Alternate Basic Salary: <input type="number" min="0" placeholder="Base exchange rate" @oninput="ALT_BasicSalaryChanged" @attributes=alt_BasicSalaryAtts /></span>
             <br />
         }
-        <i>Curent Exchange Rate: <b>@exchangeRate.Selling.ToString("c",cultureInfo)</b> for 1 @exchangeRate.BaseCurrencyCode.ToString() as of @exchangeRate.AsOf.ToOffset(new TimeSpan(5,30,0)).DateTime.ToString(cultureInfo.DateTimeFormat.FullDateTimePattern, cultureInfo) - Live Source <a href="https://www.sampath.lk/rates-and-charges?activeTab=exchange-rates" target="_blank">Sampath Bank</a></i>
+        <i>Curent Exchange Rate: <b>@exchangeRate.Selling.ToString("c", cultureInfo)</b> for 1 @exchangeRate.BaseCurrencyCode.ToString() as of @exchangeRate.AsOf.ToOffset(new TimeSpan(5, 30, 0)).DateTime.ToString(cultureInfo.DateTimeFormat.FullDateTimePattern, cultureInfo) - Live Source <a href="https://www.sampath.lk/rates-and-charges?activeTab=exchange-rates" target="_blank">Sampath Bank</a></i>
     }
 }
 <hr />
@@ -108,7 +108,7 @@
             {
                 <tr>
                     <td>@item.Value.Name @(item.Value.IsPercentage ? $"({item.Value.Amount}%)" : "")</td>
-                    <td>@string.Format(cultureInfo,"{0:C2}", @item.Value.Value)</td>
+                    <td>@string.Format(cultureInfo, "{0:C2}", @item.Value.Value)</td>
                     <td>@(item.Value.IsTaxable ? "Taxable - ✓" : "Taxable - ✗")</td>
                     <td><button @onclick="()=>DeleteItem(item.Key,true)" class="btn btn-primary">Delete</button></td>
                 </tr>
@@ -133,7 +133,7 @@
             {
                 <tr>
                     <td>@item.Value.Name @(item.Value.IsPercentage ? $"({item.Value.Amount}%)" : "")</td>
-                    <td>@string.Format(cultureInfo,"{0:C2}", @item.Value.Value)</td>
+                    <td>@string.Format(cultureInfo, "{0:C2}", @item.Value.Value)</td>
                     <td>@(item.Value.IsTaxable ? "Taxable - ✓" : "Taxable - ✗")</td>
                     @if (item.Key != SampleAllowanceGuid)
                     {
@@ -162,7 +162,7 @@
             </tr>
             <tr>
                 <td>@_tierAllowanceResponse.SchemeName</td>
-                <td>@string.Format(cultureInfo,"{0:C2}", _tierAllowanceResponse.Total)</td>
+                <td>@string.Format(cultureInfo, "{0:C2}", _tierAllowanceResponse.Total)</td>
                 <td>@(_tierAllowanceResponse.Description)</td>
                 <td>@(_tierAllowanceResponse.TierdAllowances.All(x => x.IsTaxable) ? "Taxable - ✓" : _tierAllowanceResponse.TierdAllowances.Any(x => x.IsTaxable) ? "Taxable - Only some tiers" : "Taxable - ✗")</td>
                 @if (canShowPegged)
@@ -231,7 +231,7 @@
         <tbody>
             <tr>
                 <td>Basic Salary</td>
-                <td>@string.Format(cultureInfo,"{0:C2}", @details.BasicSalary)</td>
+                <td>@string.Format(cultureInfo, "{0:C2}", @details.BasicSalary)</td>
                 @if (canShowPegged)
                 {
                     <td>
@@ -242,21 +242,21 @@
 
             <tr>
                 <td>Gross Salary</td>
-                <td>@string.Format(cultureInfo,"{0:C2}", @details.GrossSalary)</td>
+                <td>@string.Format(cultureInfo, "{0:C2}", @details.GrossSalary)</td>
                 @if (canShowPegged)
                 {
                     <td>
-                        <span>@string.Format(cultureInfo,"{0:C2}", peggedDetails.GrossSalary)</span>
+                        <span>@string.Format(cultureInfo, "{0:C2}", peggedDetails.GrossSalary)</span>
                     </td>
                 }
             </tr>
 
             <tr>
                 <td>Total for Tax</td>
-                <td>@string.Format(cultureInfo,"{0:C2}", @details.TotalForTax)</td>
+                <td>@string.Format(cultureInfo, "{0:C2}", @details.TotalForTax)</td>
                 @if (canShowPegged)
                 {
-                    <td>@string.Format(cultureInfo,"{0:C2}", peggedDetails.TotalForTax)</td>
+                    <td>@string.Format(cultureInfo, "{0:C2}", peggedDetails.TotalForTax)</td>
                 }
             </tr>
 
@@ -271,13 +271,13 @@
                 {
                     <tr>
                         <td>@item.Name @(item.IsPercentage ? $"({item.Amount}%)" : "")</td>
-                        <td>@string.Format(cultureInfo,"{0:C2}", @item.Value)</td>
+                        <td>@string.Format(cultureInfo, "{0:C2}", @item.Value)</td>
                         @if (canShowPegged)
                         {
                             var d = peggedDetails.Deductions?.FirstOrDefault(x => x.Name == item.Name && x.Amount == item.Amount && x.IsPercentage == item.IsPercentage && x.IsTaxable == item.IsTaxable);
                             if (d != null)
                             {
-                                <td>@string.Format(cultureInfo,"{0:C2}", @d.Value)</td>
+                                <td>@string.Format(cultureInfo, "{0:C2}", @d.Value)</td>
                             }
                         }
                     </tr>
@@ -285,10 +285,10 @@
             }
             <tr>
                 <td>EPF</td>
-                <td>@string.Format(cultureInfo,"{0:C2}", @details.EPFETFContributions.TotalEmployeeContribution)</td>
+                <td>@string.Format(cultureInfo, "{0:C2}", @details.EPFETFContributions.TotalEmployeeContribution)</td>
                 @if (canShowPegged)
                 {
-                    <td>@string.Format(cultureInfo,"{0:C2}", @peggedDetails.EPFETFContributions.TotalEmployeeContribution)</td>
+                    <td>@string.Format(cultureInfo, "{0:C2}", @peggedDetails.EPFETFContributions.TotalEmployeeContribution)</td>
                 }
             </tr>
             @if (details.TaxAmount > 0 || (canShowPegged && peggedDetails.TaxAmount > 0))
@@ -297,29 +297,29 @@
                     <td>API Tax</td>
                     @if (details.TaxAmount > 0)
                     {
-                        <td>@string.Format(cultureInfo,"{0:C2}", @details.TaxAmount)</td>
+                        <td>@string.Format(cultureInfo, "{0:C2}", @details.TaxAmount)</td>
                     }
                     @if (canShowPegged && peggedDetails.TaxAmount > 0)
                     {
-                        <td>@string.Format(cultureInfo,"{0:C2}", @peggedDetails.TaxAmount)</td>
+                        <td>@string.Format(cultureInfo, "{0:C2}", @peggedDetails.TaxAmount)</td>
                     }
                 </tr>
             }
             <tr style="font-weight:bold;">
                 <td>Total Deductions</td>
-                <td>@string.Format(cultureInfo,"{0:C2}", @details.TotalDeductions)</td>
+                <td>@string.Format(cultureInfo, "{0:C2}", @details.TotalDeductions)</td>
                 @if (canShowPegged)
                 {
-                    <td>@string.Format(cultureInfo,"{0:C2}", @peggedDetails.TotalDeductions)</td>
+                    <td>@string.Format(cultureInfo, "{0:C2}", @peggedDetails.TotalDeductions)</td>
                 }
             </tr>
             <tr><td><br /></td></tr>
             <tr style="font-weight:bold;text-decoration:underline">
                 <td>Net Salary</td>
-                <td>@string.Format(cultureInfo,"{0:C2}", @details.NetSalary)</td>
+                <td>@string.Format(cultureInfo, "{0:C2}", @details.NetSalary)</td>
                 @if (canShowPegged)
                 {
-                    <td>@string.Format(cultureInfo,"{0:C2}", @peggedDetails.NetSalary)</td>
+                    <td>@string.Format(cultureInfo, "{0:C2}", @peggedDetails.NetSalary)</td>
                 }
             </tr>
             <tr><td><br /></td></tr>
@@ -329,36 +329,36 @@
             </tr>
             <tr>
                 <td>EPF</td>
-                <td>@string.Format(cultureInfo,"{0:C2}", @details.EPFETFContributions.EPFEmployer)</td>
+                <td>@string.Format(cultureInfo, "{0:C2}", @details.EPFETFContributions.EPFEmployer)</td>
                 @if (canShowPegged)
                 {
-                    <td>@string.Format(cultureInfo,"{0:C2}", @peggedDetails.EPFETFContributions.EPFEmployer)</td>
+                    <td>@string.Format(cultureInfo, "{0:C2}", @peggedDetails.EPFETFContributions.EPFEmployer)</td>
                 }
             </tr>
             <tr>
                 <td>ETF</td>
-                <td>@string.Format(cultureInfo,"{0:C2}", @details.EPFETFContributions.ETFEmployer)</td>
+                <td>@string.Format(cultureInfo, "{0:C2}", @details.EPFETFContributions.ETFEmployer)</td>
                 @if (canShowPegged)
                 {
-                    <td>@string.Format(cultureInfo,"{0:C2}", @peggedDetails.EPFETFContributions.ETFEmployer)</td>
+                    <td>@string.Format(cultureInfo, "{0:C2}", @peggedDetails.EPFETFContributions.ETFEmployer)</td>
                 }
             </tr>
             <tr><td></td></tr>
             <tr style="font-weight:bold;">
                 <td>Total Employer Contribution</td>
-                <td>@string.Format(cultureInfo,"{0:C2}", @details.EPFETFContributions.TotalEmployerContribution)</td>
+                <td>@string.Format(cultureInfo, "{0:C2}", @details.EPFETFContributions.TotalEmployerContribution)</td>
                 @if (canShowPegged)
                 {
-                    <td>@string.Format(cultureInfo,"{0:C2}", @peggedDetails.EPFETFContributions.TotalEmployerContribution)</td>
+                    <td>@string.Format(cultureInfo, "{0:C2}", @peggedDetails.EPFETFContributions.TotalEmployerContribution)</td>
                 }
             </tr>
             <tr><td><br /></td></tr>
             <tr style="font-weight:bold;">
                 <td>Total EPF ETF Contribution</td>
-                <td>@string.Format(cultureInfo,"{0:C2}", @details.EPFETFContributions.TotalContribution)</td>
+                <td>@string.Format(cultureInfo, "{0:C2}", @details.EPFETFContributions.TotalContribution)</td>
                 @if (canShowPegged)
                 {
-                    <td>@string.Format(cultureInfo,"{0:C2}", @peggedDetails.EPFETFContributions.TotalContribution)</td>
+                    <td>@string.Format(cultureInfo, "{0:C2}", @peggedDetails.EPFETFContributions.TotalContribution)</td>
                 }
             </tr>
         </tbody>
@@ -452,12 +452,12 @@
         Calculate();
     }
 
-    private bool _useSampleTiredAllowance = true;
+    private bool _useSampleTiredAllowance = false;
     private ITierdAllowanceScheme _sampleTiredAllowanceScheme = TierdAllowanceSchemeFactory.GetTiredAllowanceScheme(TierdAllowanceSchemes.IFS_April2023);
 
     private void SetUseSampleTiredAllowance(Microsoft.AspNetCore.Components.ChangeEventArgs args)
     {
-        _useSampleTiredAllowance = (bool?)args.Value ?? true;
+        _useSampleTiredAllowance = (bool?)args.Value ?? false;
         Calculate();
     }
     private void SetSampleAllowance(Microsoft.AspNetCore.Components.ChangeEventArgs args, decimal? value = null)
